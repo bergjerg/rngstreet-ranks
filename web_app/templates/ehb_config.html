@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <title>Config - EHB Configuration</title>
+</head>
+<body>
+
+    <!-- Banner with Navigation -->
+    <div class="banner">
+        <a href="/" class="banner-button">Home</a>
+        <a href="/points_tracking" class="banner-button">Points Tracking</a>
+        <div class="dropdown">
+            <button class="dropbtn">Config</button>
+            <div class="dropdown-content">
+                <a href="/rank_config">Rank Config</a>
+                <a href="/points_config">Points Config</a>
+                <a href="/ehb_config">EHB Config</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropbtn">Account</button>
+            <div class="dropdown-content">
+                <a href="/change_password">Change Password</a>
+                <a href="{{ url_for('logout') }}">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <h1>EHB Configuration</h1>
+
+    <div class="table-container small-table">
+        <!-- Placeholder for when there's no data -->
+        <p class="placeholder-text">Custom EHB Eventually</p>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="info-container">
+        <p>1. Get rid of difference between main/iron/gim ehb scaling. We dont have enough mains that alt</p>
+        <p>2. Add EHB for monsters not on hiscores (demonics, tds, etc.). This ones a bit more work</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/ehb_config.js') }}"></script>
+</body>
+</html>

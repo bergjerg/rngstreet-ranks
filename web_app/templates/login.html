@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <title>Login</title>
+    <style>
+        /* Center the login form */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Add outline around the form */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+            padding: 20px;
+            border: 2px solid #838383; /* Outline color */
+            border-radius: 10px; /* Optional rounded corners */
+            box-shadow: 0 0 10px rgba(214, 214, 214, 0.1); /* Optional shadow */
+        }
+
+        .login-form label {
+            font-weight: bold;
+        }
+
+        /* Center the image */
+        .login-image-container {
+            position: relative;
+        }
+
+        .login-image {
+            width: 150px; /* Adjust the width as needed */
+            height: auto;
+        }
+
+        /* The eye elements */
+        .eye {
+            position: absolute;
+            width: 20px;
+            height: 15px;
+            background-color: #aa8156;
+            border-radius: 50%;
+        }
+
+        .eye.left {
+            top: 68px;
+            left: 63px; /* Adjust based on image positioning */
+        }
+
+        .eye.right {
+            top: 64px;
+            right: 23px; /* Adjust based on image positioning */
+        }
+
+        .pupil {
+            width: 7px;
+            height: 7px;
+            background-color: #1C1C1C;
+            border-radius: 50%;
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(50%, -50%);
+        }
+
+        /* Red eye effect */
+        .red-eye {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-image-container">
+            <img src="{{ url_for('static', filename='images/login.png') }}" alt="Login Image" class="login-image">
+            <div class="eye left">
+                <div class="pupil"></div>
+            </div>
+            <div class="eye right">
+                <div class="pupil"></div>
+            </div>
+        </div>
+    
+        <form method="POST" class="login-form" id="login-form" action="{{ url_for('login') }}">
+            <label for="username">Username</label>
+            <input type="text" name="username" required>
+            <label for="password">Password</label>
+            <input type="password" name="password" required id="password">
+            <button type="submit" class="theme-button">Login</button>
+        </form>
+    
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="flash {{ category }}">{{ message }}</li>
+                    {% if 'Invalid credentials' in message %}
+                        <script>
+                            // Turn eyes red if invalid credentials are flashed
+                            document.querySelectorAll('.eye').forEach(eye => {
+                                eye.classList.add('red-eye');
+                            });
+                        </script>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Logic for moving eyes
+        const leftEye = document.querySelector('.eye.left .pupil');
+        const rightEye = document.querySelector('.eye.right .pupil');
+        const eyeElements = document.querySelectorAll('.eye');
+        const eyes = document.querySelectorAll('.eye .pupil');
+
+        // Calculate the eye movement based on mouse position
+        document.addEventListener('mousemove', function (e) {
+            eyeElements.forEach((eye) => {
+                const eyeRect = eye.getBoundingClientRect();
+                const eyeCenterX = eyeRect.left + eyeRect.width / 2;
+                const eyeCenterY = eyeRect.top + eyeRect.height / 2;
+
+                // Calculate angle and distance
+                const angle = Math.atan2(e.clientY - eyeCenterY, e.clientX - eyeCenterX);
+                const distance = Math.min(eyeRect.width / 4, 8); // Limit movement
+
+                // Move pupil based on angle
+                const pupilX = Math.cos(angle) * distance;
+                const pupilY = Math.sin(angle) * distance;
+
+                const pupil = eye.querySelector('.pupil');
+                pupil.style.transform = `translate(${pupilX}px, ${pupilY}px)`;
+            });
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            this.submit();
+        });
+
+    </script>
+</body>
+</html>

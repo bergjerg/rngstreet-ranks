@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <title>RNG Street | Ranks</title>
+</head>
+<body>
+
+    <!-- Banner with Navigation -->
+    <div class="banner">
+        <a href="/" class="banner-button">Home</a>
+        <a href="/points_tracking" class="banner-button">Points Tracking</a>
+        <div class="dropdown">
+            <button class="dropbtn">Config</button>
+            <div class="dropdown-content">
+                <a href="/rank_config">Rank Config</a>
+                <a href="/points_config">Points Config</a>
+                <a href="/ehb_config">EHB Config</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropbtn">Account</button>
+            <div class="dropdown-content">
+                <a href="/change_password">Change Password</a>
+                <a href="{{ url_for('logout') }}">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <h1>RNG Street</h1>
+
+    <!-- Toggle Box -->
+    <div class="toggle-box">
+        <div class="toggle-row">
+            <label class="switch">
+                <input type="checkbox" id="toggleExpandCollapseBtn">
+                <span class="slider"></span>
+            </label>
+            <span class="label-text">Expand All</span>
+        </div>
+        <div class="toggle-row">
+            <label class="switch">
+                <input type="checkbox" id="toggleRankUpsBtn">
+                <span class="slider"></span>
+            </label>
+            <span class="label-text">Rank Ups</span>
+        </div>
+        <div class="toggle-row">
+            <label class="switch">
+                <input type="checkbox" id="toggleRankMismatchesBtn">
+                <span class="slider"></span>
+            </label>
+            <span class="label-text">Rank Mismatches</span>
+        </div>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Search by Name or RSN" class="search-bar">
+    <table id="membersTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>RSN</th>
+                <th>Points</th>
+                <th>Rank</th>
+                <th>Rank Up</th>
+                <th>In Game Rank</th>
+                <th>Discord ID</th>
+                <th>Join Date</th>
+                <th>Account Type</th>
+                <th>Last Active</th>
+            </tr>
+            <tr class="filter-row">
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>
+                    <div class="dropdown-filter">
+                        <select id="rankFilter" class="filter-dropdown">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                </th>
+                <th>
+                    <div class="dropdown-filter">
+                        <select id="nextRankFilter" class="filter-dropdown">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                </th>
+                <th>
+                    <div class="dropdown-filter">
+                        <select id="inGameRankFilter" class="filter-dropdown">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                </th>
+                <th>
+                    <div class="dropdown-filter">
+                        <select id="discordRankFilter" class="filter-dropdown">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                </th>
+                <th></th>
+                <th>
+                    <div class="dropdown-filter">
+                        <select id="accountTypeFilter" class="filter-dropdown">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        
+        <tbody>
+            <!-- Rows will be inserted here by JavaScript -->
+        </tbody>
+    </table>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

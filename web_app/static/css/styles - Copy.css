@@ -1,0 +1,472 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #333; /* Dark grey background */
+    color: #ccc; /* Default body text color (same as the faded name color) */
+    margin: 0;
+    padding: 0;
+}
+
+.banner {
+    display: flex;
+    justify-content: flex-start;
+    background-color: #444; /* Slightly lighter grey for the banner */
+    padding: 10px;
+    border-bottom: 2px solid #555;
+}
+
+.banner-button, .dropbtn {
+    background-color: #555; /* Dark grey background for buttons */
+    color: white;
+    padding: 10px 20px;
+    margin-right: 10px;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.banner-button:hover, .dropbtn:hover {
+    background-color: #666;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #555;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    min-width: 160px;
+    z-index: 1;
+    border-radius: 4px;
+}
+
+.dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    border-bottom: 1px solid #666;
+}
+
+.dropdown-content a:hover {
+    background-color: #666;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    background-color: #666;
+}
+
+table {
+    width: 70%;
+    border-collapse: collapse;
+    margin: 20px auto; /* Center the table */
+    background-color: #444; /* Slightly lighter grey for the table background */
+    color: #ccc; /* Text color inside the table */
+}
+
+th, td {
+    border: 1px solid #555; /* Darker border to match the grey theme */
+    padding: 8px;
+}
+
+th {
+    background-color: #555; /* Dark grey for table headers */
+    color: #fff; /* White text for headers */
+    position: relative;
+    padding-bottom: 20px; /* Add padding to accommodate the filter dropdown */
+}
+
+.filter-row th {
+    padding: 4px;
+    background-color: #333; /* Match the main header row color */
+    color: #fff; /* Ensure the text color is also consistent */
+}
+
+
+.name-column {
+    color: inherit; /* Inherit the faded color from the body */
+}
+
+.rsn-column {
+    width: 100px; /* Make the RSN field less wide */
+}
+
+.editable {
+    background-color: #666; /* Medium grey background for editable fields */
+    color: #ccc; /* Text color matches the faded body text */
+    border: 1px solid #777; /* Border slightly lighter than background */
+    width: 60px; /* Narrower width for editable fields */
+    text-align: right; /* Right-align numbers */
+}
+
+.editable:focus {
+    border-color: #007bff; /* Highlight on focus */
+    background-color: #555; /* Darker grey background on focus */
+    color: #fff; /* White text on focus */
+}
+
+.apply-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.875em;
+    display: block;
+    width: 100%;
+}
+
+.apply-button:disabled {
+    background-color: #555; /* Dark grey to match the theme */
+    color: #ccc; /* Lighter grey text to indicate it's disabled */
+    cursor: not-allowed;
+}
+
+#saveAllButton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.875em;
+    display: block;
+    width: 100%;
+}
+
+#saveAllButton:disabled {
+    background-color: #555; /* Dark grey to match the theme */
+    color: #ccc; /* Lighter grey text to indicate it's disabled */
+    cursor: not-allowed;
+}
+
+/* Toggle Box Styles */
+.toggle-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 10px;
+    width: 45%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #444;
+    border-radius: 8px;
+}
+
+/* Toggle Row Styles */
+.toggle-row {
+    display: flex;
+    align-items: center;
+}
+
+/* Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin-right: 10px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #007bff;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.label-text {
+    color: #ccc;
+    font-size: 0.875em;
+}
+
+/* Search Bar Styles */
+.search-bar {
+    display: block;
+    width: 70%;
+    margin: 0 auto 20px auto;
+    padding: 8px;
+    background-color: #555;
+    color: #ccc;
+    border: 1px solid #777;
+    border-radius: 4px;
+}
+
+/* Ensure consistent size for the table container */
+.table-container {
+    width: 50%; /* You can adjust this percentage */
+    margin: 20px auto; /* Keep it centered */
+    transition: width 0.3s ease; /* Smooth transition if width changes */
+}
+
+/* Fix width when in edit mode */
+.table-container.editable {
+    width: 50%; /* Same width as non-edit mode */
+}
+
+/* Keep input fields from altering table dimensions */
+.table-container input {
+    box-sizing: border-box; /* Ensure padding and border are included in element's width/height */
+    width: 100%; /* Ensure inputs take up the full width of the cell */
+}
+
+.editable-field {
+    border: none;
+    background-color: transparent;
+    color: inherit;
+    pointer-events: none;
+}
+
+.editable-field.active-edit {
+    background-color: #555;
+    pointer-events: auto;
+    color: #fff;
+}
+
+/* Button container */
+.buttons-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 10px;
+    height: 50px; /* Fixed height to prevent movement */
+}
+
+#applyChangesButton, #addButton {
+    background-color: #007bff; /* Same as Apply button on Points Tracking page */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 6px 12px; /* Consistent padding */
+    font-size: 0.875em; /* Match font size */
+    display: inline-block; /* Align buttons inline */
+    width: auto; /* Auto width to fit content */
+}
+
+#applyChangesButton:disabled, #addButton:disabled {
+    background-color: #555; /* Dark grey to match the theme */
+    color: #ccc; /* Lighter grey text to indicate it's disabled */
+    cursor: not-allowed;
+}
+
+#applyChangesButton:hover, #addButton:hover {
+    background-color: #0056b3; /* Slightly darker blue on hover */
+}
+
+.placeholder-text {
+    color: #ccc; /* Light grey text to match the theme */
+    text-align: center; /* Center the text */
+    font-size: 1.5em; /* Slightly larger font */
+    margin-top: 20px; /* Space above the text */
+}
+
+.month-selector-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 20px 0;
+    padding-left: 5%;
+}
+
+.month-select {
+    background-color: #555; /* Dark grey background for dropdown */
+    color: white; /* White text */
+    border: 1px solid #777; /* Slightly lighter grey border */
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 1em;
+    margin-left: 10px;
+}
+
+.theme-button {
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    cursor: pointer; /* Pointer cursor on hover */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners */
+    padding: 6px 8px; /* Padding inside the button */
+}
+
+.theme-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.theme-button:disabled {
+    background-color: #555; /* Dark grey for disabled state */
+    color: #ccc; /* Light grey text for disabled state */
+    cursor: not-allowed; /* Not-allowed cursor for disabled state */
+}
+
+th {
+    background-color: #555; /* Dark grey for table headers */
+    color: #fff; /* White text for headers */
+    position: relative;
+    padding-bottom: 20px; /* Add padding to accommodate the filter dropdown */
+}
+
+.dropdown-filter {
+    position: relative;
+    width: 100%;
+    margin-top: 2px;
+    z-index: 1;
+}
+
+.filter-dropdown {
+    width: 100%; /* Adjust width to fit within the header */
+    padding: 4px;
+    background-color: #555;
+    color: white;
+    border: 1px solid #777;
+    border-radius: 4px;
+    margin-top: 4px; /* Add margin to space out from the header */
+}
+
+
+.expanded-section {
+    background-color: #444; /* Match the table's background color */
+    color: #ccc; /* Match the table's text color */
+    padding: 10px;
+    border-top: 1px solid #555; /* Slight border to separate from the row */
+}
+
+.expanded-section td {
+    padding: 5px 8px;
+    text-align: left;
+}
+
+.expanded-section .edit-input {
+    background-color: #555; /* Match the table's editable fields */
+    color: #fff;
+    border: 1px solid #777;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.expanded-section .theme-button {
+    background-color: #007bff; /* Match the existing buttons */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 6px 12px;
+    margin-right: 5px;
+    font-size: 0.875em;
+}
+
+.expanded-section .theme-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.form-container {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #555; /* Background color for the form section */
+    border-radius: 4px;
+}
+
+.form-container h4 {
+    margin: 0 0 10px 0;
+    color: #fff; /* Heading color */
+}
+
+.form-container input, 
+.form-container select {
+    width: 100%; /* Full width for inputs and selects */
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #777;
+    border-radius: 4px;
+    background-color: #666;
+    color: #fff;
+}
+
+.form-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1em;
+}
+
+.form-container button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.red-button {
+    background-color: #ff4c4c; /* Red background */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 6px 12px;
+    margin-right: 5px;
+    font-size: 0.875em;
+}
+
+.red-button:hover {
+    background-color: #cc0000; /* Darker red on hover */
+}
+
+.table-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.table-header .month-selector-container,
+.table-header h2 {
+    margin: 0 10px; /* Add some spacing between the dropdown and the heading */
+}
+
+.table-container {
+    margin: 0 auto; /* Center the table itself */
+    width: fit-content; /* Adjusts the width to fit the table content */
+}

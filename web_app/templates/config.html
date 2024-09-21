@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <title>Config - Rank Configuration</title>
+</head>
+<body>
+
+    <!-- Banner with Navigation -->
+    <div class="banner">
+        <a href="/" class="banner-button">Home</a>
+        <a href="/points_tracking" class="banner-button">Points Tracking</a>
+        <div class="dropdown">
+            <button class="dropbtn">Config</button>
+            <div class="dropdown-content">
+                <a href="/rank_config">Rank Config</a>
+                <a href="/points_config">Points Config</a>
+                <a href="/ehb_config">EHB Config</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropbtn">Account</button>
+            <div class="dropdown-content">
+                <a href="/change_password">Change Password</a>
+                <a href="{{ url_for('logout') }}">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <h1>Rank Configuration</h1>
+
+    <div class="table-container small-table">
+        <!-- Edit Mode Toggle and Buttons -->
+        <div class="buttons-container">
+            <label class="switch">
+                <input type="checkbox" id="editModeSwitch">
+                <span class="slider"></span>
+            </label>
+            <span>Edit Mode</span>
+            <button id="applyChangesButton" class="apply-button" disabled>Apply Changes</button>
+            <button id="addButton" class="apply-button">Add</button>
+        </div>
+
+        <table id="rankConfigTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+</body>
+</html>
