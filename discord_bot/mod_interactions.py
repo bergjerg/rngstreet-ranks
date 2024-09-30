@@ -72,11 +72,13 @@ class ModToolsView(View):
 
 async def on_button_click(interaction: discord.Interaction):
     # Check if the user has the "Moderator" role
+    custom_id = interaction.data.get("custom_id")
+    if custom_id not in ["rank_ups", "mismatches", "refresh"]: return
+
     moderator_role = discord.utils.get(interaction.guild.roles, name="Moderator")    
     if moderator_role not in interaction.user.roles:    
         await interaction.response.send_message("Moderator role required.", ephemeral=True, delete_after=3)
         return
-    custom_id = interaction.data.get("custom_id")
     if custom_id == "rank_ups":
         await display_rank_ups(interaction)
     elif custom_id == "mismatches":

@@ -8,6 +8,7 @@ from rank_management import change_rank_on_discord
 from mod_interactions import display_mod_tools, refresh_mod_tools, on_button_click, send_rankups_log
 from splits_monitor import monitor_splits 
 from db import get_db_connection
+from loot_hiscores import post_loot_hiscores
 
 @bot.event
 async def on_ready():
@@ -76,10 +77,6 @@ async def on_ready():
     view.add_item(add_rsn_button)
     view.add_item(choose_main_button)
 
-    # Send the formatted message with buttons
-    await member_channel.purge(limit=10)
-    await member_channel.send(view=view)
-
     # Initialize the mod tools in the mod tools channel
     mod_tools_channel = bot.get_channel(MOD_TOOLS_CHANNEL_ID)
     await display_mod_tools(mod_tools_channel)
@@ -88,6 +85,11 @@ async def on_ready():
     monitor_discord_ranks.start()
     refresh_mod_tools.start()
     send_rankups_log.start()
+    post_loot_hiscores.start()
+
+    # Send the formatted message with buttons
+    await member_channel.purge(limit=10)
+    await member_channel.send(view=view)
 
     # Start monitoring the splits
     await monitor_splits(bot)  # Call the function to start monitoring splits
