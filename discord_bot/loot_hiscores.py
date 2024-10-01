@@ -35,27 +35,13 @@ def get_medal_emoji(position):
 from datetime import datetime, timedelta
 
 # Function to calculate the time remaining until the next reset
-def get_reset_time_remaining():
+def get_reset_timestamp():
     now = datetime.now()
-    year = now.year
-    month = now.month
-
-    # Calculate the first day of the next month at midnight
-    if month == 12:
-        next_month = 1
-        next_year = year + 1
-    else:
-        next_month = month + 1
-        next_year = year
-
-    reset_time = datetime(next_year, next_month, 1, 0, 0, 0)
-    time_diff = reset_time - now
-
-    # Calculate days and hours
-    days = time_diff.days
-    hours = time_diff.seconds // 3600
-
-    return f"{days} days, {hours} hours"
+    # Calculate the first day of the next month
+    next_month = now.month % 12 + 1
+    year = now.year + (now.month // 12)
+    reset_time = datetime(year, next_month, 1, 0, 0)
+    return reset_time
 
 import random
 import requests
@@ -159,9 +145,17 @@ async def post_or_update_loot_hiscores(channel_id):
 
         # Get the current month name
         current_month = datetime.now().strftime("%B")
+        # Get the time remaining until the next reset
+        reset_time = get_reset_timestamp()
+        reset_time_remaining = f"<t:{int(reset_time.timestamp())}:R>" 
 
-        # Create an embed message for the loot hiscores with the current month in the title
-        embed = discord.Embed(title=f"**Loot Hiscores - {current_month}** (BETA)", color=discord.Color.blue(), timestamp=datetime.now())
+        # Create an embed message for the loot hiscores with the current month in the title and description
+        embed = discord.Embed(
+            title=f"**Loot Hiscores - {current_month}** (BETA)", 
+            description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n", 
+            color=discord.Color.blue(), 
+            timestamp=datetime.now()
+        )
 
         # Get the highest value item and leading Discord ID for the thumbnail
         item_name_first = leaderboard[0][5]  # Assuming first entry has the highest value
@@ -210,11 +204,6 @@ async def post_or_update_loot_hiscores(channel_id):
 
             # Add entry to the embed with markdown-based emphasis: mention user, show RSN, total earned, top item, quantity, and source
             embed.add_field(name=f"", value=message_value, inline=False)
-        # Get the time remaining until the next reset
-        reset_time_remaining = get_reset_time_remaining()
-
-        # Add footer with the custom countdown to reset
-        embed.set_footer(text=f"Resets In: {reset_time_remaining}")
 
         # Create a button to show how to join the hiscores
         join_button = Button(label="How to Join", style=discord.ButtonStyle.primary)
@@ -230,15 +219,25 @@ async def post_or_update_loot_hiscores(channel_id):
 
             # Send the ephemeral message with the attachments and improved indentation
             await interaction.response.send_message(
-                """To join the loot hiscores:
+                """**What is the Loot Hiscores?**
+
+The Loot Hiscores track all your drops over 100gp sent from the Dink plugin to our bot. 
+Throughout the month, we collect this data to build a leaderboard, showing who’s raking in the most GP from their drops. 
+The competition resets at midnight on the first of each month, so be sure to keep looting and aiming for the top spot!
+You can also view a summary of all the loot you've gained this month by hitting the 'Check My Loot' button. 
+The leaderboard refreshes every 60 seconds, so any drops you get will be shown here within a minute.
+
+For any issues, message <@477469957710544897>
+                
+**How to join:** ```ansi
 1. Add your RSN to the bot above.
-2. Get **Dink** from the Plugin Hub.
-3. Setup the Dink plugin:
-    - Add `https://loot.rngstreet.com/dink` to the Primary Webhook.
+2. Get \x1b[1;33mDink\x1b[0m from the Plugin Hub.
+3. Setup Dink: (Image attached)
+    - Add \x1b[1;33mhttps://loot.rngstreet.com/dink\x1b[0m to the Primary Webhook.
     - Enable Loot.
-    - Disable Images.
-    - Set the minimum value to **at least 1k**.
-4. If you already use Dink for other reasons, add the webhook to the **Loot** section in the **Webhook Overrides** tab instead of the **Primary Webhook**. You can add multiple URLs here and this just means not sending uneccesary data to the bot. You can also leave images on if you're using it for other webhooks.
+    - Disable Send Images.
+    - Set the minimum value to \x1b[1;33mat least 100gp\x1b[0m.
+4. If you already use Dink for other reasons, add the webhook to the \x1b[1;33mLoot\x1b[0m section in the \x1b[1;33mWebhook Overrides\x1b[0m tab instead of the \x1b[1;33mPrimary Webhook\x1b[0m. You can add multiple URLs here and this just means not sending uneccesary data to the bot. You can also leave images on if you're using it for other webhooks.```
                 """, 
                 ephemeral=True, 
                 delete_after=180,
@@ -254,8 +253,8 @@ async def post_or_update_loot_hiscores(channel_id):
 
         # Create a view to hold the button
         view = View(timeout=None)
-        view.add_item(join_button)
         view.add_item(view_loot_button)
+        view.add_item(join_button)
 
         # Get the member channel
         member_channel = bot.get_channel(channel_id)
@@ -406,7 +405,48 @@ def format_loot_data(loot_data):
     # Return both the table header and the rows separately to handle splitting
     return headers + table_separator, rows
 
-# New function to handle the button click and display loot data
+class LootPaginator(View):
+    def __init__(self, loot_data_pages, current_page=0):
+        super().__init__(timeout=180)
+        self.loot_data_pages = loot_data_pages
+        self.current_page = current_page
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.clear_items()  # Clear existing buttons
+        # Add the Previous button if not on the first page
+        if self.current_page > 0:
+            prev_button = Button(label="Previous", style=discord.ButtonStyle.primary, custom_id="previous_page")
+            prev_button.callback = self.previous_page
+            self.add_item(prev_button)
+
+        # Add the Next button if not on the last page
+        if self.current_page < len(self.loot_data_pages) - 1:
+            next_button = Button(label="Next", style=discord.ButtonStyle.primary, custom_id="next_page")
+            next_button.callback = self.next_page
+            self.add_item(next_button)
+
+    async def send_page(self, interaction):
+        # Display the current page with ANSI code block
+        await interaction.response.edit_message(
+            content=f"```ansi\n{self.loot_data_pages[self.current_page]}```",
+            view=self
+        )
+
+    async def previous_page(self, interaction: discord.Interaction):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.update_buttons()
+            await self.send_page(interaction)
+
+    async def next_page(self, interaction: discord.Interaction):
+        if self.current_page < len(self.loot_data_pages) - 1:
+            self.current_page += 1
+            self.update_buttons()
+            await self.send_page(interaction)
+
+
+# Function to handle the button click and display loot data with pagination
 async def on_view_loot_button_click(interaction):
     discord_id = str(interaction.user.id)
     await interaction.response.defer(ephemeral=True)  # Defer early
@@ -415,7 +455,7 @@ async def on_view_loot_button_click(interaction):
     loot_data = await fetch_loot_data(discord_id)
 
     if not loot_data:
-        await interaction.response.send_message("Nothin D:", ephemeral=True, delete_after=10)
+        await interaction.followup.send("Nothin D:", ephemeral=True, delete_after=10)
         return
 
     # Get the formatted loot data, split into headers and rows
@@ -432,7 +472,7 @@ async def on_view_loot_button_click(interaction):
         # If adding this row exceeds the limit, add the current message to the list
         if len(current_message) + len(row) > max_message_length:
             messages.append(current_message)  # Save the current message
-            current_message = row  # Start a new message without headers for subsequent posts
+            current_message = headers + row  # Start a new message without headers for subsequent posts
         else:
             current_message += row  # Append row to current message
 
@@ -440,16 +480,11 @@ async def on_view_loot_button_click(interaction):
     if current_message:
         messages.append(current_message)
 
-    # Send the loot data in parts, ensuring proper ANSI code block wrapping
-    msg_list = []
-    for i, message_part in enumerate(messages):
-        if i == 0:
-            # Send the initial response with headers and the first set of data
-            msg_list.append(await interaction.followup.send(f"```ansi\n{message_part}```", ephemeral=True))
-        else:
-            # Send follow-up messages without headers
-           msg_list.append(await interaction.followup.send(f"```ansi\n{message_part}\n```", ephemeral=True))
-
+    # Initialize the paginator view with the messages
+    view = LootPaginator(messages)
+    
+    # Send the first page
+    msg_list = [await interaction.followup.send(f"```ansi\n{messages[0]}```", view=view, ephemeral=True)]
     await clear_messages_after_timeout(msg_list)
 
 # Task to periodically update the loot hiscores message
