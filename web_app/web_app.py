@@ -608,7 +608,7 @@ def dink():
                 # Loop through the items and insert each one into the stg_loot table
                 for item in data['extra']['items']:
                     # Add the price check to ensure priceEach is greater than 1000
-                    if item['priceEach'] > 1000:
+                    if item['priceEach'] > 100:
                         # Check if 'discordUser' exists, and set discord_id to None if it doesn't
                         discord_id = data['discordUser']['id'] if 'discordUser' in data else None
                         
