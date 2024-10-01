@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
 import mysql.connector
 import os
+import logging
 
 # Load environment variables from .env file
 #
@@ -595,6 +596,7 @@ def remove_alt(wom_id):
 
 @app.route('/dink', methods=['POST'])
 def dink():
+    logging.info(f"POST request: {request.form}")
     try:
         # Get JSON payload from the 'payload_json' field
         data = request.form.get('payload_json')
@@ -607,6 +609,9 @@ def dink():
                 for item in data['extra']['items']:
                     # Add the price check to ensure priceEach is greater than 1000
                     if item['priceEach'] > 1000:
+                        # Check if 'discordUser' exists, and set discord_id to None if it doesn't
+                        discord_id = data['discordUser']['id'] if 'discordUser' in data else None
+                        
                         connect_db()
                         cursor.execute("""
                             INSERT INTO stg_loot (
@@ -623,7 +628,7 @@ def dink():
                             item['priceEach'],
                             item.get('rarity', None),
                             data['dinkAccountHash'],
-                            data['discordUser']['id'],
+                            discord_id,  # Insert None if discordUser doesn't exist
                             data['world'],
                             data['regionId']
                         ))
@@ -635,10 +640,11 @@ def dink():
                 return '', 200
 
         return 'error', 200
-    
+
     except Exception as e:
-        print(f"Error: {e}")
+        logging.error(f"Error: {e}")
         return 'error', 200
+
 
 
 

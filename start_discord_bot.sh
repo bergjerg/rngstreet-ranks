@@ -15,7 +15,7 @@ fi
 source "$DISCORD_BOT_DIR/venv/bin/activate"
 
 # Start the Discord bot
-nohup python "$DISCORD_BOT_DIR/main.py" >> "$LOG_DIR/discord_bot.log" 2>&1 &
+nohup python -u "$DISCORD_BOT_DIR/main.py" >> "$LOG_DIR/discord_bot.log" 2>&1 &
 
 # Deactivate the virtual environment
 deactivate

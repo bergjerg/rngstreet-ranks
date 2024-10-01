@@ -145,7 +145,7 @@ async def post_or_update_loot_hiscores(channel_id):
     # Get the database connection
     db = get_db_connection()
     cursor = db.cursor()
-
+    
     try:
         # Query to get the loot leaderboard data
         cursor.execute("""
