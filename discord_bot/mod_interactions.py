@@ -6,9 +6,9 @@ import datetime
 from db import get_db_connection
 from member_interactions import bot
 from rank_management import change_rank_on_discord  
-from config import MOD_TOOLS_CHANNEL_ID, MOD_LOG_CHANNEL_ID
+from config import MOD_TOOLS_CHANNEL_ID, MOD_LOG_CHANNEL_ID, MOD_INTERACTION_MESSAGE_ID
 
-original_message_id = None
+original_message_id = MOD_INTERACTION_MESSAGE_ID
 
 # Global list to store rank-up details
 rankups_log_buffer = []
@@ -108,10 +108,10 @@ async def display_mod_tools(channel: discord.TextChannel):
         
         # Edit the existing buttons if they exist
         # Else purge the channel and send new message (startup)
-        if original_message_id != None:
+        try:
             message = await channel.fetch_message(original_message_id)
             await message.edit(view=view)
-        else:
+        except:
             await channel.purge(limit=10)
             message = await channel.send(view=view)
             original_message_id = message.id

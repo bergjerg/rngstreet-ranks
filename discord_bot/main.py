@@ -2,7 +2,7 @@
 
 import discord
 from discord.ext import commands, tasks
-from config import BOT_TOKEN, MEMBER_CHANNEL_ID, MOD_TOOLS_CHANNEL_ID
+from config import BOT_TOKEN, MEMBER_CHANNEL_ID, MOD_TOOLS_CHANNEL_ID, MEMBER_INTERACTION_MESSAGE_ID
 from member_interactions import bot, CheckRankButton, AddRSNModal, SetMainRSNButton, HowRanksWorkButton
 from rank_management import change_rank_on_discord  
 from mod_interactions import display_mod_tools, refresh_mod_tools, on_button_click, send_rankups_log
@@ -86,10 +86,14 @@ async def on_ready():
     refresh_mod_tools.start()
     send_rankups_log.start()
     post_loot_hiscores.start()
-
-    # Send the formatted message with buttons
-    await member_channel.purge(limit=10)
-    await member_channel.send(view=view)
+    
+    try:
+        existing_message = await member_channel.fetch_message(MEMBER_INTERACTION_MESSAGE_ID)
+        await existing_message.edit(view=view)
+    except Exception as e:
+        # If the message doesn't exist, purge recent messages and send a new one
+        await member_channel.purge(limit=10)
+        await member_channel.send(view=view)
 
     # Start monitoring the splits
     await monitor_splits(bot)  # Call the function to start monitoring splits

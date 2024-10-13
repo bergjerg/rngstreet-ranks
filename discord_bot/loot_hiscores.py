@@ -4,13 +4,20 @@ import random
 import discord
 from discord.ext import tasks
 from discord.ui import Button, View
-from config import MEMBER_CHANNEL_ID
+from config import MEMBER_CHANNEL_ID, LOOT_HISCORES_MESSAGE_ID
 from db import get_db_connection
 from member_interactions import bot
 from datetime import datetime
+import random
+import requests
+import urllib.parse  # For URL encoding
+
+# Store the last fetched item name 
+last_fetched_item = None
+last_fetched_image_url = None
 
 # Store the message ID in memory
-loot_hiscores_message_id = None
+loot_hiscores_message_id = LOOT_HISCORES_MESSAGE_ID
 
 # Function to format the values into a shortened format
 def format_value(value):
@@ -43,13 +50,6 @@ def get_reset_timestamp():
     reset_time = datetime(year, next_month, 1, 0, 0)
     return reset_time
 
-import random
-import requests
-
-# Store the last fetched item name globally (or persist this in a more suitable location)
-last_fetched_item = None
-last_fetched_image_url = None
-
 async def get_thumbnail_url(item_name, discord_id):
     # Define the four options
     options = [
@@ -64,9 +64,6 @@ async def get_thumbnail_url(item_name, discord_id):
     
     # Select one of the options with the specified probability
     return random.choices(options, weights=weights, k=1)[0]
-
-import requests
-import urllib.parse  # For URL encoding
 
 # Cache variables for the last fetched item and image URL
 last_fetched_item = None
@@ -258,6 +255,8 @@ For any issues, message <@477469957710544897>
 
         # Get the member channel
         member_channel = bot.get_channel(channel_id)
+
+        embed.description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n"
 
         if loot_hiscores_message_id:
             # Try to fetch and edit the existing message if it exists
