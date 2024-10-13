@@ -1,4 +1,5 @@
 import json
+import re
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -6,6 +7,9 @@ from dotenv import load_dotenv
 import mysql.connector
 import os
 import logging
+from logging.handlers import RotatingFileHandler
+
+
 
 # Load environment variables from .env file
 #
@@ -596,30 +600,34 @@ def remove_alt(wom_id):
 
 @app.route('/dink', methods=['POST'])
 def dink():
-    logging.info(f"POST request: {request.form}")
+    #logging.info(f"POST request: {request.form}")
     try:
         # Get JSON payload from the 'payload_json' field
         data = request.form.get('payload_json')
         if data:
             data = json.loads(data)  # Convert JSON string to dictionary
+            #print(data)
 
             # Check the required conditions
             if data['type'] == 'LOOT' and not data['seasonalWorld'] and data['clanName'] == 'RNG Street':
-                # Loop through the items and insert each one into the stg_loot table
+                # Loop through the items and insert each one into the stg_loot table                        
+                connect_db()
+                
                 for item in data['extra']['items']:
                     # Add the price check to ensure priceEach is greater than 1000
                     if item['priceEach'] > 100:
                         # Check if 'discordUser' exists, and set discord_id to None if it doesn't
                         discord_id = data['discordUser']['id'] if 'discordUser' in data else None
+                        player_name_clean = re.sub(r'[^A-Za-z0-9 ]+', ' ', data['playerName'])
                         
-                        connect_db()
                         cursor.execute("""
                             INSERT INTO stg_loot (
                                 unload_time, player_name, item_id, item_name, source, category, quantity, price_each, rarity, 
                                 dink_account_hash, discord_id, world, regionid
                             ) VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
-                            data['playerName'],
+                            #data['playerName'],
+                            player_name_clean,
                             item['id'],
                             item['name'],
                             data['extra']['source'],
@@ -632,11 +640,9 @@ def dink():
                             data['world'],
                             data['regionId']
                         ))
-                        db.commit()
-                        cursor.execute("CALL populate_wom_id_for_loot()")
-                        db.commit()
-                        db.close()
-
+                
+                db.commit()
+                db.close()  
                 return '', 200
 
         return 'error', 200
@@ -654,3 +660,13 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0', port=8080, debug=False)
     else:
         app.run(host='127.0.0.1', port=8080, debug=True)
+
+# Set up logging
+if not app.debug:
+    # Rotating file handler for logs
+    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
+    
+    # Optional: Set up basic logging level
+    logging.basicConfig(level=logging.INFO)

@@ -455,7 +455,7 @@ async def on_view_loot_button_click(interaction):
     loot_data = await fetch_loot_data(discord_id)
 
     if not loot_data:
-        await interaction.followup.send("Nothin D:", ephemeral=True, delete_after=10)
+        await interaction.followup.send("Nothin D:", ephemeral=True)
         return
 
     # Get the formatted loot data, split into headers and rows
