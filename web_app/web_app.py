@@ -1,19 +1,32 @@
-import json
+# Standard library imports
+import math
+import os
 import re
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_from_directory
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import json
+import logging
+import threading
+from datetime import datetime, timedelta
+from collections import deque
+from logging.handlers import RotatingFileHandler
+
+# Third-party imports
+from flask import (
+    Flask, render_template, request, jsonify, redirect, send_file, 
+    url_for, flash, send_from_directory
+)
+from flask_login import (
+    LoginManager, UserMixin, login_user, login_required, 
+    logout_user, current_user
+)
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
 import mysql.connector
-import os
-import logging
-from logging.handlers import RotatingFileHandler
 
 
 
 # Load environment variables from .env file
 #
-load_dotenv('config.env')
+load_dotenv(r'C:\Users\Henryk\Documents\PythonScripts\rngstreet-ranks\web_app\config.env')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('APP_SECRET_KEY')
@@ -597,61 +610,145 @@ def remove_alt(wom_id):
 
     return '', 204
 
+recent_messages = deque(maxlen=50)  # Store up to 100 messages (adjust as needed)
+cache_lock = threading.Lock()  # Ensure thread-safe access to the deque
 
-@app.route('/dink', methods=['POST'])
+def clean_expired_messages():
+    """Remove messages older than 60 seconds from the deque."""
+    now = datetime.now()
+    with cache_lock:
+        while recent_messages and recent_messages[0][0] < now - timedelta(seconds=60):
+            recent_messages.popleft()
+
+def is_duplicate(message_signature):
+    """Check if the message is a duplicate."""
+    with cache_lock:
+        for _, signature in recent_messages:
+            if signature == message_signature:
+                return True
+        return False
+
+def store_message_signature(message_signature):
+    """Store the message signature with the current timestamp."""
+    with cache_lock:
+        recent_messages.append((datetime.now(), message_signature))
+
+@app.route('/dink', methods=['GET', 'POST'])
 def dink():
-    #logging.info(f"POST request: {request.form}")
     try:
+        if request.method == 'GET':
+            # Serve the dink.json file
+            json_file_path = os.path.join(os.path.dirname(__file__), 'dink.json')
+            if os.path.exists(json_file_path):
+                return send_file(json_file_path, mimetype='application/json')
+            else:
+                return jsonify({"error": "dink.json file not found"}), 404
         # Get JSON payload from the 'payload_json' field
         data = request.form.get('payload_json')
         if data:
             data = json.loads(data)  # Convert JSON string to dictionary
-            #print(data)
+            print(data)
 
-            # Check the required conditions
-            if data['type'] == 'LOOT' and not data['seasonalWorld'] and data['clanName'] == 'RNG Street':
-                # Loop through the items and insert each one into the stg_loot table                        
+            # Handle LOOT type
+            if data['type'] == 'LOOT' and data['seasonalWorld'] and data['clanName'] == 'RNG Street':
                 connect_db()
-                
+
                 for item in data['extra']['items']:
-                    # Add the price check to ensure priceEach is greater than 1000
                     if item['priceEach'] > 100:
-                        # Check if 'discordUser' exists, and set discord_id to None if it doesn't
                         discord_id = data['discordUser']['id'] if 'discordUser' in data else None
                         player_name_clean = re.sub(r'[^A-Za-z0-9 ]+', ' ', data['playerName'])
-                        
+
                         cursor.execute("""
                             INSERT INTO stg_loot (
                                 unload_time, player_name, item_id, item_name, source, category, quantity, price_each, rarity, 
                                 dink_account_hash, discord_id, world, regionid
                             ) VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
-                            #data['playerName'],
-                            player_name_clean,
-                            item['id'],
-                            item['name'],
-                            data['extra']['source'],
-                            data['extra']['category'],
-                            item['quantity'],
-                            item['priceEach'],
-                            item.get('rarity', None),
-                            data['dinkAccountHash'],
-                            discord_id,  # Insert None if discordUser doesn't exist
-                            data['world'],
-                            data['regionId']
+                            player_name_clean, item['id'], item['name'],
+                            data['extra']['source'], data['extra']['category'], item['quantity'],
+                            item['priceEach'], item.get('rarity', None), data['dinkAccountHash'],
+                            discord_id, data['world'], data['regionId']
                         ))
-                
-                db.commit()
-                db.close()  
-                return '', 200
 
+                db.commit()
+                cursor.close()
+                db.close()
+                return '', 200
+            elif (
+                data['type'] == 'CHAT' and
+                data['clanName'] == 'RNG Street' and
+                data['extra']['type'] == 'CLAN_MESSAGE' and
+                not data['seasonalWorld']
+            ):
+                print(data)
+                clean_expired_messages()
+
+                message_type = data['extra']['type']
+                message = data['extra'].get('message', '')
+
+                # Create a unique message signature
+                message_signature = (message_type, message)
+
+                # Check for duplicate message
+                if is_duplicate(message_signature):
+                    logging.info("Duplicate message detected, skipping insert.")
+                    return '', 200
+
+                store_message_signature(message_signature)
+                pb_pattern = re.compile(
+                    r"(?P<player_name>[A-Za-z0-9\- ]+) has achieved a new (?P<boss_name>.+?) "
+                    r"(?:\(Team Size: (?P<team_size>\d+)(?: players)?\) )?personal best: "
+                    r"(?P<time>(?:\d+:)?\d{1,2}:\d{2}(?:\.\d{2})?)",
+                    re.IGNORECASE
+                )
+
+
+
+
+                match = pb_pattern.search(message)
+                if match:
+                    # Extract details from the regex match
+                    player_name = match.group('player_name').strip()
+                    player_name = re.sub(r'[^A-Za-z0-9 ]+', ' ', player_name)
+                    boss_name = match.group('boss_name').strip()
+                    team_size = match.group('team_size')  # Team size or None
+                    team_size = int(team_size) if team_size else 1  # Default to 1 if not specified
+                    time_str = match.group('time')
+                    unload_player_name = re.sub(r'[^A-Za-z0-9 ]+', ' ', data['playerName'])
+
+                    # Parse time string
+                    time_parts = list(map(float, time_str.split(':')))
+                    total_seconds = sum(
+                        part * 60 ** i for i, part in enumerate(reversed(time_parts))
+                    )  # Handles HH:MM:SS and MM:SS formats
+
+                    # Convert to ticks (1 tick = 0.6 seconds)
+                    total_ticks = math.ceil(total_seconds / 0.6)
+
+                    # Insert into the database
+                    connect_db()
+                    try:
+                        cursor.execute(
+                            """
+                            INSERT INTO stg_clan_pb (unload_time, player_name, boss_name, team_size, time_seconds, time_ticks, message, unload_player_name)
+                            VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s)
+                            """,
+                            (player_name, boss_name, team_size, total_seconds, total_ticks, message, unload_player_name)
+                        )
+                        db.commit()
+                    except Exception as e:
+                        logging.error(f"Database error: {e}")
+                        db.rollback()
+                    finally:
+                        cursor.close()
+                        db.close()
+
+                return '', 200
         return 'error', 200
 
     except Exception as e:
         logging.error(f"Error: {e}")
         return 'error', 200
-
-
 
 
 if __name__ == "__main__":

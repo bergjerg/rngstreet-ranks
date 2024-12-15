@@ -1,0 +1,18 @@
+{
+    "combatTaskEnabled": false,
+    "speedrunEnabled": false,
+    "questEnabled": false,
+    "killCountEnabled": false,
+    "slayerEnabled": false,
+    "deathEnabled": false,
+    "lootIncludeClueScrolls": true,
+    "lootEnabled": true,
+    "chatMessageTypes": ["PRIVATE", "CLAN"],
+    "lootSendImage": false,
+    "chatSendImage": false,
+    "chatPatterns": "*has achieved a new*personal best*",
+    "notifyChat": true,
+    "lootIncludePlayer": true,
+    "minLootValue": 100
+  }
+  

@@ -148,7 +148,8 @@ async def post_or_update_loot_hiscores(channel_id):
 
         # Create an embed message for the loot hiscores with the current month in the title and description
         embed = discord.Embed(
-            title=f"**Loot Hiscores - {current_month}** (BETA)", 
+            #title=f"**Loot Hiscores - {current_month}**", 
+            title=f"**Loot Hiscores - Leagues Edition**", 
             description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n", 
             color=discord.Color.blue(), 
             timestamp=datetime.now()
@@ -256,7 +257,8 @@ For any issues, message <@477469957710544897>
         # Get the member channel
         member_channel = bot.get_channel(channel_id)
 
-        embed.description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n"
+        #embed.description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n"
+        embed.description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** After Leagues\n"
 
         if loot_hiscores_message_id:
             # Try to fetch and edit the existing message if it exists
