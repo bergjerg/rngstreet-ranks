@@ -752,7 +752,8 @@ def dink():
         return 'error', 200
 
     except Exception as e:
-        logging.error(f"Error: {e}")
+        player_name = data.get('playerName', 'Unknown')  # Safely get 'playerName' or default to 'Unknown'
+        logging.error(f"Error: {e}. PlayerName: {player_name}")
         return 'error', 200
 
 
