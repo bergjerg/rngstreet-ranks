@@ -1,5 +1,6 @@
 # main.py
 
+import asyncio
 import discord
 from discord.ext import commands, tasks
 from config import BOT_TOKEN, MEMBER_CHANNEL_ID, MOD_TOOLS_CHANNEL_ID, MEMBER_INTERACTION_MESSAGE_ID
@@ -9,6 +10,7 @@ from mod_interactions import display_mod_tools, refresh_mod_tools, on_button_cli
 from splits_monitor import monitor_splits 
 from db import get_db_connection
 from loot_hiscores import post_loot_hiscores
+from pb_hiscores import post_clan_pb_hiscores
 
 @bot.event
 async def on_ready():
@@ -80,19 +82,26 @@ async def on_ready():
     # Initialize the mod tools in the mod tools channel
     mod_tools_channel = bot.get_channel(MOD_TOOLS_CHANNEL_ID)
     await display_mod_tools(mod_tools_channel)
+    
+    #REMOVE REMOVE REMOVE
+    # await member_channel.purge(limit=50)
+    # await asyncio.sleep(5) 
 
     # Start the periodic tasks
     monitor_discord_ranks.start()
     refresh_mod_tools.start()
     send_rankups_log.start()
+    post_clan_pb_hiscores.start()
+    await asyncio.sleep(10) 
     post_loot_hiscores.start()
+    await asyncio.sleep(2) 
     
     try:
         existing_message = await member_channel.fetch_message(MEMBER_INTERACTION_MESSAGE_ID)
         await existing_message.edit(view=view)
     except Exception as e:
         # If the message doesn't exist, purge recent messages and send a new one
-        await member_channel.purge(limit=10)
+        #await member_channel.purge(limit=10)
         await member_channel.send(view=view)
 
     # Start monitoring the splits
