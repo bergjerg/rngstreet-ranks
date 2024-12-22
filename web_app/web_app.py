@@ -611,10 +611,8 @@ def clean_expired_messages():
 def is_duplicate(message_signature):
     """Check if the message is a duplicate."""
     with cache_lock:
-        for _, signature in recent_messages:
-            if signature == message_signature:
-                return True
-        return False
+        return any(signature == message_signature for _, signature in recent_messages)
+
 
 def store_message_signature(message_signature):
     """Store the message signature with the current timestamp."""
@@ -667,12 +665,10 @@ def dink():
                 data['extra']['type'] == 'CLAN_MESSAGE'
             ):
                 clean_expired_messages()
-
-                message_type = data['extra']['type']
                 message = data['extra'].get('message', '')
 
                 # Create a unique message signature
-                message_signature = (message_type, message)
+                message_signature = message
 
                 # Check for duplicate message
                 if is_duplicate(message_signature):
@@ -680,12 +676,23 @@ def dink():
                     return '', 200
 
                 store_message_signature(message_signature)
+                # pb_pattern = re.compile(
+                #     r"(?P<player_name>[A-Za-z0-9\- ]+) has achieved a new (?P<boss_name>.+?) "
+                #     r"(?:\(Team Size: (?P<team_size>\d+)(?: players)?\) )?personal best: "
+                #     r"(?P<time>(?:\d+:)?\d{1,2}:\d{2}(?:\.\d{2})?)",
+                #     re.IGNORECASE
+                # )
+
                 pb_pattern = re.compile(
-                    r"(?P<player_name>[A-Za-z0-9\- ]+) has achieved a new (?P<boss_name>.+?) "
-                    r"(?:\(Team Size: (?P<team_size>\d+)(?: players)?\) )?personal best: "
+                    r"(?P<player_name>[A-Za-z0-9\- ]+) has achieved a new (?P<boss_name>[A-Za-z0-9 \(\)]+)"
+                    r"(?: \(team size: (?P<team_size>\d+|Solo)(?: players)?\))?"
+                    r"(?: (?P<mode>(?:Normal|Expert) mode(?: Challenge| Overall)?))? personal best: "
                     r"(?P<time>(?:\d+:)?\d{1,2}:\d{2}(?:\.\d{2})?)",
                     re.IGNORECASE
                 )
+
+
+
 
 
 
@@ -696,10 +703,21 @@ def dink():
                     player_name = match.group('player_name').strip()
                     player_name = re.sub(r'[^A-Za-z0-9 ]+', ' ', player_name)
                     boss_name = match.group('boss_name').strip()
-                    team_size = match.group('team_size')  # Team size or None
-                    team_size = int(team_size) if team_size else 1  # Default to 1 if not specified
+                    mode = match.group('mode').strip() if match.group('mode') else None 
                     time_str = match.group('time')
                     unload_player_name = re.sub(r'[^A-Za-z0-9 ]+', ' ', data['playerName'])
+                    team_size = match.group('team_size')  # Team size or None
+                    if team_size:
+                        if team_size.lower() == "solo":
+                            team_size = 1
+                        else:
+                            team_size = int(team_size)
+                    else:
+                        team_size = None
+
+                    if mode:
+                        mode = mode.replace('mode ', '')
+                        boss_name = f"{boss_name} {mode}"
 
                     # Parse time string
                     time_parts = list(map(float, time_str.split(':')))
@@ -707,8 +725,11 @@ def dink():
                         part * 60 ** i for i, part in enumerate(reversed(time_parts))
                     )  # Handles HH:MM:SS and MM:SS formats
 
-                    # Convert to ticks (1 tick = 0.6 seconds)
-                    total_ticks = math.ceil(total_seconds / 0.6)
+                    # Convert to ticks (1 tick = 0.6 seconds) (*10 to avoid floating point rounding issue)
+                    total_ticks = math.ceil(math.ceil((total_seconds * 10) / 0.6)/10)
+                    
+                    # Re calculate total seconds to decimal
+                    total_seconds = total_ticks * 0.6
 
                     # Insert into the database
                     connect_db()
@@ -727,7 +748,6 @@ def dink():
                     finally:
                         cursor.close()
                         db.close()
-
                 return '', 200
         return 'error', 200
 
