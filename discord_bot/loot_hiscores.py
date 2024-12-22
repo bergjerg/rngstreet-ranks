@@ -75,6 +75,9 @@ def get_item_image(item_name):
 
     # If no image is found, return a fallback image URL
     fallback_image_url = "https://i.imgur.com/pTQFkrw.png"
+    
+    #Issue with API call
+    return fallback_image_url
 
     # If the item name is the same as the last fetched item, return the cached image URL
     if item_name == last_fetched_item:

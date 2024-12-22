@@ -7,7 +7,7 @@ count=0
 while [ $count -lt 1 ]; do
     # First execution
     sudo mysql rngstreet -e "CALL rngstreet.populate_wom_id_for_loot();"
-    sudo mysql rngstreet -e "delete from stg_loot where player_name ='Slaughta' and source='Araxxor';"
+    sudo mysql rngstreet -e "CALL rngstreet.populate_wom_id_for_pbs();"
 
     # Increment the counter
     count=$((count + 1))

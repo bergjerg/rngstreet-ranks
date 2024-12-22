@@ -26,7 +26,7 @@ import mysql.connector
 
 # Load environment variables from .env file
 #
-load_dotenv(r'C:\Users\Henryk\Documents\PythonScripts\rngstreet-ranks\web_app\config.env')
+load_dotenv('config.env')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('APP_SECRET_KEY')
@@ -93,7 +93,6 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        print(username)
         
         connect_db()
         cursor.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
@@ -145,14 +144,10 @@ def change_password():
         user_data = cursor.fetchone()
         db.close()
 
-        print("made it")
-
         # Check if the current password is correct
         if user_data and check_password_hash(user_data[1], current_password):
-            print("made it")
             # Check if new password and confirm password match
             if new_password == confirm_password:
-                print("made it")
                 # Hash the new password
                 new_password_hash = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=8)
 
@@ -511,9 +506,6 @@ def link_account(wom_id):
     data = request.json
     main_wom_id = data['main_wom_id']
     alt_wom_id = data['alt_wom_id']
-
-    print(main_wom_id)
-    print(alt_wom_id)
     
     # Fetch both entries based on WOM_ID
     cursor.execute("SELECT WOM_ID, DISCORD_ID FROM members WHERE WOM_ID IN (%s, %s)", (main_wom_id, alt_wom_id))
@@ -530,13 +522,9 @@ def link_account(wom_id):
     main_discord_id = main_account[1]  # Discord ID for main account
     alt_discord_id = alt_account[1]    # Discord ID for alt account
 
-    print(main_discord_id)
-    print(alt_discord_id)
-
     # Check if both accounts have empty Discord IDs
     if not main_discord_id  and not alt_discord_id:
         db.close()
-        print("Requires linking to disc i")
         return jsonify({'error': 'Requires linking one account to a discord ID'}), 400
 
     # If one account has a Discord ID and the other does not, update the empty one
@@ -647,7 +635,6 @@ def dink():
         data = request.form.get('payload_json')
         if data:
             data = json.loads(data)  # Convert JSON string to dictionary
-            print(data)
 
             # Handle LOOT type
             if data['type'] == 'LOOT' and data['seasonalWorld'] and data['clanName'] == 'RNG Street':
@@ -677,10 +664,8 @@ def dink():
             elif (
                 data['type'] == 'CHAT' and
                 data['clanName'] == 'RNG Street' and
-                data['extra']['type'] == 'CLAN_MESSAGE' and
-                not data['seasonalWorld']
+                data['extra']['type'] == 'CLAN_MESSAGE'
             ):
-                print(data)
                 clean_expired_messages()
 
                 message_type = data['extra']['type']
