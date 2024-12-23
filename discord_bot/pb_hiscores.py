@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import tasks
 from db import get_db_connection
@@ -64,10 +65,15 @@ async def post_or_update_clan_pb_hiscores(channel_id):
         # Fetch boss configurations for name and color
         cursor.execute(
             """
-            SELECT boss_name, color FROM boss_cfg
+            SELECT boss_name, category, color FROM boss_cfg where active=true
             """
         )
-        boss_configs = {row[0]: {"color": row[1]} for row in cursor.fetchall()}
+        boss_configs = {}
+        for row in cursor.fetchall():
+            boss_name, category, color = row
+            if category not in boss_configs:
+                boss_configs[category] = {}
+            boss_configs[category][boss_name] = {"color": color}
 
         # Query to get the clan PB hiscores grouped by category
         cursor.execute(
@@ -92,6 +98,14 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                 categories[category][boss_name][team_size] = []
             categories[category][boss_name][team_size].append(row)
 
+        # Ensure all bosses from boss_cfg are included in the correct categories
+        for category, bosses in boss_configs.items():
+            if category not in categories:
+                categories[category] = {}
+            for boss_name in sorted(bosses.keys()):  # Sort boss names alphabetically
+                if boss_name not in categories[category]:
+                    categories[category][boss_name] = {}
+
         # Create embeds for each category
         embeds = []
         for category, bosses in categories.items():
@@ -109,9 +123,10 @@ async def post_or_update_clan_pb_hiscores(channel_id):
             if thumbnail:
                 embed.set_thumbnail(url=thumbnail)
 
-            for boss_name, team_sizes in bosses.items():
+            for boss_name in sorted(bosses.keys()):  # Sort bosses alphabetically when iterating
+                team_sizes = bosses[boss_name]
                 # Fetch color for the boss
-                boss_config = boss_configs.get(boss_name, {})
+                boss_config = boss_configs.get(category, {}).get(boss_name, {})
                 color_name = boss_config.get("color", "White")  # Default color
                 color_code = get_color_code(color_name)
 
@@ -120,33 +135,29 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                 boss_section = f"{colored_boss_name}"
                 team_entries = []
 
+                if not team_sizes:  # Ensure bosses with no team sizes still display "1, 2, 3"
+                    team_sizes[None] = []  # Use None to represent an empty team size
+
                 for team_size, records in team_sizes.items():
                     team_display = f"**`{format_team_size(team_size)}`**" if team_size else ""
                     entries = []
 
-                    # Group records by time for tied users
-                    grouped_by_time = defaultdict(list)
-                    for record in records[:3]:  # Top 3 times for each team size
-                        _, _, _, time_seconds, rsn, discord_id, unload_time, position = record
-                        grouped_by_time[time_seconds].append((rsn, discord_id, unload_time, position))
-
-                    # Format grouped entries
-                    for time_seconds, users in grouped_by_time.items():
-                        precise_time = format_time(time_seconds)
-                        rsn_list = ", ".join(user[0] for user in users)  # Collect RSNs
-                        discord_id_list = ", ".join(f"<@{user[1]}>" for user in users if user[1])
-                        unload_time = users[0][2]
-                        position = users[0][3]
-
-                        entry = f"`{position}. {rsn_list}`"
-                        if discord_id_list:
-                            entry += f" {discord_id_list}"
-                        entry += f" - **{precise_time}** <t:{int(unload_time.timestamp())}:R>"
+                    # Ensure exactly 3 positions are displayed
+                    for position in range(1, 4):
+                        if position <= len(records):
+                            _, _, _, time_seconds, rsn, discord_id, unload_time, _ = records[position - 1]
+                            precise_time = format_time(time_seconds)
+                            entry = f"`{position}. {rsn}`"
+                            if discord_id:
+                                entry += f" <@{discord_id}>"
+                            entry += f" - **{precise_time}** <t:{int(unload_time.timestamp())}:R>"
+                        else:
+                            entry = f"`{position}.`"
                         entries.append(entry)
 
                     team_entries.append(f"**{team_display}**\n" + "\n".join(entries) if team_display else "\n".join(entries))
 
-                embed.add_field(name="", value=boss_section+" \n\n".join(team_entries), inline=False)
+                embed.add_field(name="", value=boss_section + " \n\n".join(team_entries), inline=False)
 
             embeds.append(embed)
 
@@ -163,6 +174,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                     try:
                         message = await channel.fetch_message(clan_pb_post_ids[i])
                         await message.edit(embed=embed)
+                        await asyncio.sleep(1) 
                     except discord.NotFound:
                         pass  # Do nothing if the message is not found
 
