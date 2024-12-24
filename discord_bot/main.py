@@ -84,8 +84,8 @@ async def on_ready():
     await display_mod_tools(mod_tools_channel)
     
     #REMOVE REMOVE REMOVE
-    # await member_channel.purge(limit=50)
-    # await asyncio.sleep(5) 
+    #await member_channel.purge(limit=50)
+    #await asyncio.sleep(5) 
 
     # Start the periodic tasks
     monitor_discord_ranks.start()

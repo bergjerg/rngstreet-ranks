@@ -684,7 +684,7 @@ def dink():
                 # )
 
                 pb_pattern = re.compile(
-                    r"(?P<player_name>[A-Za-z0-9\- ]+) has achieved a new (?P<boss_name>[A-Za-z0-9 \(\)]+)"
+                    r"(?P<player_name>[A-Za-z0-9\- ]+) has achieved a new (?P<boss_name>[A-Za-z0-9' \(\)]+)"
                     r"(?: \(team size: (?P<team_size>\d+|Solo)(?: players)?\))?"
                     r"(?: (?P<mode>(?:Normal|Expert) mode(?: Challenge| Overall)?))? personal best: "
                     r"(?P<time>(?:\d+:)?\d{1,2}:\d{2}(?:\.\d{2})?)",
@@ -748,6 +748,8 @@ def dink():
                     finally:
                         cursor.close()
                         db.close()
+                else:
+                    logging.info(f" No match against message: {message}")
                 return '', 200
         return 'error', 200
 

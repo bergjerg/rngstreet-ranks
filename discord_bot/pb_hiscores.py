@@ -165,7 +165,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             if position > 3:
                                 break
                             rsn_list = ", ".join(user[0] for user in users)
-                            discord_list = ", ".join(f"<@{user[1]}>" for user in users if user[1])
+                            discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
                             unload_time = users[0][2]
 
                             entry = f"`{position}. {rsn_list}`"
@@ -200,7 +200,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             if position > 3:
                                 break
                             rsn_list = ", ".join(user[0] for user in users)
-                            discord_list = ", ".join(f"<@{user[1]}>" for user in users if user[1])
+                            discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
                             unload_time = users[0][2]
 
                             entry = f"`{position}. {rsn_list}`"
