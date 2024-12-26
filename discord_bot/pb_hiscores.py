@@ -166,6 +166,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                                 break
                             rsn_list = ", ".join(user[0] for user in users)
                             discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
+                            discord_list = "" #Removing until id tag fix for uncached users
                             unload_time = users[0][2]
 
                             entry = f"`{position}. {rsn_list}`"
@@ -201,6 +202,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                                 break
                             rsn_list = ", ".join(user[0] for user in users)
                             discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
+                            discord_list = "" #Removing until id tag fix for uncached users
                             unload_time = users[0][2]
 
                             entry = f"`{position}. {rsn_list}`"
@@ -234,6 +236,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                     try:
                         message = await channel.fetch_message(clan_pb_post_ids[i])
                         await message.edit(embed=embed)
+                        await asyncio.sleep(2) 
                     except discord.NotFound:
                         pass  # Do nothing if the message is not found
 
