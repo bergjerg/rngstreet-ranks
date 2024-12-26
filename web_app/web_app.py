@@ -42,6 +42,7 @@ cursor = None
 
 # Global cache for player name to WOM ID mapping
 player_name_to_wom_id = {}
+cache_initialized = False  # Global flag to track initialization
 
 def connect_db():
     global db, cursor
@@ -624,6 +625,7 @@ def store_message_signature(message_signature):
 
 @app.route('/dink', methods=['GET', 'POST'])
 def dink():
+    global player_name_to_wom_id
     try:
         if request.method == 'GET':
             # Serve the dink.json file
@@ -775,6 +777,7 @@ def refresh_cache():
         connect_db()
         cursor.execute("SELECT rsn, wom_id FROM members WHERE wom_rank IS NOT NULL")
         player_name_to_wom_id = {row[0]: row[1] for row in cursor.fetchall()}
+        # logging.error(f"Success refreshing cache")
         cursor.close()
         db.close()
     except Exception as e:
@@ -783,11 +786,16 @@ def refresh_cache():
     # Schedule the next cache refresh
     threading.Timer(300, refresh_cache).start()  # Refresh every 5 minutes
 
+@app.before_request
+def initialize_cache():
+    global cache_initialized
+    if not cache_initialized:
+        app.logger.info("Initializing cache...")
+        refresh_cache()
+        cache_initialized = True
 
 
 if __name__ == "__main__":
-    # Initialize the cache refresh 
-    refresh_cache()
     # Determine if running in production or development
     if os.getenv('ENV') == 'prod':
         app.run(host='0.0.0.0', port=8080, debug=False)
