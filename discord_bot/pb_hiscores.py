@@ -159,22 +159,34 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             _, _, _, time_seconds, rsn, discord_id, unload_time, position = record
                             grouped_by_time[time_seconds].append((rsn, discord_id, unload_time, position))
 
+                        # Determine the maximum RSN list string length
+                        if not grouped_by_time:  # Check if grouped_by_time is empty
+                            max_rsn_list_length = 0
+                        else:
+                            max_rsn_list_length = max(len(", ".join([user[0] for user in users])) for users in grouped_by_time.values())
+                            max_rsn_list_length = max(20, max_rsn_list_length)
+
+
                         # Ensure exactly 3 positions are displayed
                         position = 1
                         for time_seconds, users in sorted(grouped_by_time.items()):
                             if position > 3:
                                 break
-                            rsn_list = ", ".join(user[0] for user in users)
-                            discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
-                            discord_list = "" #Removing until id tag fix for uncached users
+                            rsn_list = [user[0] for user in users]
+                            # Pad RSN list to the maximum length
+                            rsn_list_str = ", ".join(rsn_list)
+                            rsn_list_str += " " * (max_rsn_list_length - len(rsn_list_str))
+
+                            discord_list = ""  # Removing until id tag fix for uncached users
                             unload_time = users[0][2]
 
-                            entry = f"`{position}. {rsn_list}`"
+                            entry = f"`{position}. {rsn_list_str}`"
                             if discord_list:
                                 entry += f" {discord_list}"
                             entry += f" - **{format_time(time_seconds)}** <t:{int(unload_time.timestamp())}:R>"
                             entries.append(entry)
                             position += 1
+
 
                         # Pad missing positions
                         while position <= 3:
@@ -195,17 +207,28 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             _, _, _, time_seconds, rsn, discord_id, unload_time, position = record
                             grouped_by_time[time_seconds].append((rsn, discord_id, unload_time, position))
 
+                        # Determine the maximum RSN list string length
+                        if not grouped_by_time:  # Check if grouped_by_time is empty
+                            max_rsn_list_length = 0
+                        else:
+                            max_rsn_list_length = max(len(", ".join([user[0] for user in users])) for users in grouped_by_time.values())
+                            max_rsn_list_length = max(20, max_rsn_list_length)
+
+
                         # Ensure exactly 3 positions are displayed
                         position = 1
                         for time_seconds, users in sorted(grouped_by_time.items()):
                             if position > 3:
                                 break
-                            rsn_list = ", ".join(user[0] for user in users)
-                            discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
+                            rsn_list = [user[0] for user in users]
+                            # Pad RSN list to the maximum length
+                            rsn_list_str = ", ".join(rsn_list)
+                            rsn_list_str += " " * (max_rsn_list_length - len(rsn_list_str))
+                            #discord_list = ", ".join(f"<@!{user[1]}>" for user in users if user[1])
                             discord_list = "" #Removing until id tag fix for uncached users
                             unload_time = users[0][2]
 
-                            entry = f"`{position}. {rsn_list}`"
+                            entry = f"`{position}. {rsn_list_str}`"
                             if discord_list:
                                 entry += f" {discord_list}"
                             entry += f" - **{format_time(time_seconds)}** <t:{int(unload_time.timestamp())}:R>"
