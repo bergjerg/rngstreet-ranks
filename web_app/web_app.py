@@ -646,13 +646,16 @@ def dink():
                         cursor.execute("""
                             INSERT INTO stg_loot (
                                 unload_time, player_name, item_id, item_name, source, category, quantity, price_each, rarity, 
-                                dink_account_hash, discord_id, world, regionid
-                            ) VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                dink_account_hash, discord_id, world, regionid, wom_id
+                            ) VALUES (
+                                NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                (SELECT wom_id FROM members WHERE wom_rank IS NOT NULL AND rsn = %s LIMIT 1)
+                            )
                         """, (
                             player_name_clean, item['id'], item['name'],
                             data['extra']['source'], data['extra']['category'], item['quantity'],
                             item['priceEach'], item.get('rarity', None), data['dinkAccountHash'],
-                            discord_id, data['world'], data['regionId']
+                            discord_id, data['world'], data['regionId'], player_name_clean
                         ))
 
                 db.commit()
@@ -736,11 +739,16 @@ def dink():
                     try:
                         cursor.execute(
                             """
-                            INSERT INTO stg_clan_pb (unload_time, player_name, boss_name, team_size, time_seconds, time_ticks, message, unload_player_name)
-                            VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s)
+                            INSERT INTO stg_clan_pb (unload_time, player_name, boss_name, team_size, time_seconds, time_ticks, message, unload_player_name, wom_id)
+                            VALUES (
+                                NOW(), 
+                                %s, %s, %s, %s, %s, %s, %s, 
+                                (SELECT wom_id FROM members WHERE wom_rank IS NOT NULL AND rsn = %s LIMIT 1)
+                            )
                             """,
-                            (player_name, boss_name, team_size, total_seconds, total_ticks, message, unload_player_name)
+                            (player_name, boss_name, team_size, total_seconds, total_ticks, message, unload_player_name, player_name)
                         )
+
                         db.commit()
                     except Exception as e:
                         logging.error(f"Database error: {e}")
