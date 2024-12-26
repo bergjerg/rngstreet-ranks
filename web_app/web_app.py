@@ -40,6 +40,9 @@ login_manager.login_view = 'login'
 db = None
 cursor = None
 
+# Global cache for player name to WOM ID mapping
+player_name_to_wom_id = {}
+
 def connect_db():
     global db, cursor
     if db is None or not db.is_connected():
@@ -642,20 +645,20 @@ def dink():
                     if item['priceEach'] > 100:
                         discord_id = data['discordUser']['id'] if 'discordUser' in data else None
                         player_name_clean = re.sub(r'[^A-Za-z0-9 ]+', ' ', data['playerName'])
+                        wom_id = player_name_to_wom_id.get(player_name_clean, None)
 
                         cursor.execute("""
                             INSERT INTO stg_loot (
                                 unload_time, player_name, item_id, item_name, source, category, quantity, price_each, rarity, 
                                 dink_account_hash, discord_id, world, regionid, wom_id
                             ) VALUES (
-                                NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
-                                (SELECT wom_id FROM members WHERE wom_rank IS NOT NULL AND rsn = %s LIMIT 1)
+                                NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                             )
                         """, (
                             player_name_clean, item['id'], item['name'],
                             data['extra']['source'], data['extra']['category'], item['quantity'],
                             item['priceEach'], item.get('rarity', None), data['dinkAccountHash'],
-                            discord_id, data['world'], data['regionId'], player_name_clean
+                            discord_id, data['world'], data['regionId'], wom_id
                         ))
 
                 db.commit()
@@ -705,6 +708,7 @@ def dink():
                     # Extract details from the regex match
                     player_name = match.group('player_name').strip()
                     player_name = re.sub(r'[^A-Za-z0-9 ]+', ' ', player_name)
+                    wom_id = player_name_to_wom_id.get(player_name, None)
                     boss_name = match.group('boss_name').strip()
                     mode = match.group('mode').strip() if match.group('mode') else None 
                     time_str = match.group('time')
@@ -742,11 +746,10 @@ def dink():
                             INSERT INTO stg_clan_pb (unload_time, player_name, boss_name, team_size, time_seconds, time_ticks, message, unload_player_name, wom_id)
                             VALUES (
                                 NOW(), 
-                                %s, %s, %s, %s, %s, %s, %s, 
-                                (SELECT wom_id FROM members WHERE wom_rank IS NOT NULL AND rsn = %s LIMIT 1)
+                                %s, %s, %s, %s, %s, %s, %s, %s
                             )
                             """,
-                            (player_name, boss_name, team_size, total_seconds, total_ticks, message, unload_player_name, player_name)
+                            (player_name, boss_name, team_size, total_seconds, total_ticks, message, unload_player_name, wom_id)
                         )
 
                         db.commit()
@@ -765,9 +768,26 @@ def dink():
         player_name = data.get('playerName', 'Unknown')  # Safely get 'playerName' or default to 'Unknown'
         logging.error(f"Error: {e}. PlayerName: {player_name}")
         return 'error', 200
+   
+def refresh_cache():
+    global player_name_to_wom_id
+    try:
+        connect_db()
+        cursor.execute("SELECT rsn, wom_id FROM members WHERE wom_rank IS NOT NULL")
+        player_name_to_wom_id = {row[0]: row[1] for row in cursor.fetchall()}
+        cursor.close()
+        db.close()
+    except Exception as e:
+        logging.error(f"Error refreshing cache: {e}")
+    
+    # Schedule the next cache refresh
+    threading.Timer(300, refresh_cache).start()  # Refresh every 5 minutes
+
 
 
 if __name__ == "__main__":
+    # Initialize the cache refresh 
+    refresh_cache()
     # Determine if running in production or development
     if os.getenv('ENV') == 'prod':
         app.run(host='0.0.0.0', port=8080, debug=False)
