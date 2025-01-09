@@ -151,8 +151,7 @@ async def post_or_update_loot_hiscores(channel_id):
 
         # Create an embed message for the loot hiscores with the current month in the title and description
         embed = discord.Embed(
-            #title=f"**Loot Hiscores - {current_month}**", 
-            title=f"**Loot Hiscores - Leagues Edition**", 
+            title=f"**Loot Hiscores - {current_month}**", 
             description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n", 
             color=discord.Color.blue(), 
             timestamp=datetime.now()
@@ -217,6 +216,7 @@ async def post_or_update_loot_hiscores(channel_id):
             # Attach the images from the images directory
             dink_image = discord.File(os.path.join(images_dir, "dink.png"), filename="dink.png")
             dink_setup_image = discord.File(os.path.join(images_dir, "dink_setup.png"), filename="dink_setup.png")
+            dink_setup_image_two = discord.File(os.path.join(images_dir, "dink_setup_two.png"), filename="dink_setup_two.png")
 
             # Send the ephemeral message with the attachments and improved indentation
             await interaction.response.send_message(
@@ -224,9 +224,9 @@ async def post_or_update_loot_hiscores(channel_id):
 
 The Loot Hiscores track all your drops over 100gp sent from the Dink plugin to our bot. 
 Throughout the month, we collect this data to build a leaderboard, showing who’s raking in the most GP from their drops. 
-The competition resets at midnight on the first of each month, so be sure to keep looting and aiming for the top spot!
 You can also view a summary of all the loot you've gained this month by hitting the 'Check My Loot' button. 
 The leaderboard refreshes every 60 seconds, so any drops you get will be shown here within a minute.
+We also use this to track clan boss PB times.
 
 For any issues, message <@477469957710544897>
                 
@@ -234,15 +234,12 @@ For any issues, message <@477469957710544897>
 1. Add your RSN to the bot above.
 2. Get \x1b[1;33mDink\x1b[0m from the Plugin Hub.
 3. Setup Dink: (Image attached)
-    - Add \x1b[1;33mhttps://loot.rngstreet.com/dink\x1b[0m to the Primary Webhook.
-    - Enable Loot.
-    - Disable Send Images.
-    - Set the minimum value to \x1b[1;33mat least 100gp\x1b[0m.
-4. If you already use Dink for other reasons, add the webhook to the \x1b[1;33mLoot\x1b[0m section in the \x1b[1;33mWebhook Overrides\x1b[0m tab instead of the \x1b[1;33mPrimary Webhook\x1b[0m. You can add multiple URLs here and this just means not sending uneccesary data to the bot. You can also leave images on if you're using it for other webhooks.```
+    - Add \x1b[1;33mhttps://loot.rngstreet.com/dink\x1b[0m to the Primary Webhook URL.
+    - Advanced --> Dynamic Config URL - \x1b[1;33mhttps://loot.rngstreet.com/dink\x1b[0m (Warning: If you already use Dink, this will change some of your settings. Message me if you want to run this and your other webhooks)```
                 """, 
                 ephemeral=True, 
                 delete_after=180,
-                files=[dink_image, dink_setup_image]  # Attach the images
+                files=[dink_image, dink_setup_image, dink_setup_image_two]  # Attach the images
             )
 
         # Create a button to view loot data
@@ -260,8 +257,7 @@ For any issues, message <@477469957710544897>
         # Get the member channel
         member_channel = bot.get_channel(channel_id)
 
-        #embed.description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** {reset_time_remaining}\n"
-        embed.description=f"**Updated:** <t:{int(datetime.now().timestamp())}:R>\n**Reset:** After Leagues\n"
+        embed.description=f"**Reset:** {reset_time_remaining}\n"
 
         if loot_hiscores_message_id:
             # Try to fetch and edit the existing message if it exists

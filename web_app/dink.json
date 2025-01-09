@@ -13,6 +13,7 @@
     "chatPatterns": "*has achieved a new*personal best*",
     "notifyChat": true,
     "lootIncludePlayer": true,
-    "minLootValue": 100
+    "minLootValue": 100,    
+    "sendClanName": true
   }
   
