@@ -640,14 +640,14 @@ def dink():
             data = json.loads(data)  # Convert JSON string to dictionary
 
             # Handle LOOT type
-            if data['type'] == 'LOOT' and data['seasonalWorld'] and data['clanName'] == 'RNG Street':
+            if data['type'] == 'LOOT' and not data['seasonalWorld'] and data['clanName'] == 'RNG Street':
                 connect_db()
 
                 for item in data['extra']['items']:
                     if item['priceEach'] > 100:
                         discord_id = data['discordUser']['id'] if 'discordUser' in data else None
                         player_name_clean = re.sub(r'[^A-Za-z0-9 ]+', ' ', data['playerName'])
-                        wom_id = player_name_to_wom_id.get(player_name_clean, None)
+                        wom_id = player_name_to_wom_id.get(player_name_clean.lower(), None)
 
                         cursor.execute("""
                             INSERT INTO stg_loot (
@@ -692,7 +692,7 @@ def dink():
                 # )
 
                 pb_pattern = re.compile(
-                    r"(?P<player_name>[A-Za-z0-9_\- ]+) has achieved a new (?P<boss_name>[A-Za-z0-9' \(\)]+)"
+                    r"(?P<player_name>[A-Za-z0-9_\- ]+) has achieved a new (?P<boss_name>[A-Za-z0-9' \(\)\-]+)"
                     r"(?: \(team size: (?P<team_size>\d+|Solo)(?: players)?\))?"
                     r"(?: (?P<mode>(?:Normal|Expert) mode(?: Challenge| Overall)?))? personal best: "
                     r"(?P<time>(?:\d+:)?\d{1,2}:\d{2}(?:\.\d{2})?)",
@@ -710,7 +710,7 @@ def dink():
                     # Extract details from the regex match
                     player_name = match.group('player_name').strip()
                     player_name = re.sub(r'[^A-Za-z0-9 ]+', ' ', player_name)
-                    wom_id = player_name_to_wom_id.get(player_name, None)
+                    wom_id = player_name_to_wom_id.get(player_name.lower(), None)
                     boss_name = match.group('boss_name').strip()
                     mode = match.group('mode').strip() if match.group('mode') else None 
                     time_str = match.group('time')
@@ -775,7 +775,7 @@ def refresh_cache():
     global player_name_to_wom_id
     try:
         connect_db()
-        cursor.execute("SELECT rsn, wom_id FROM members WHERE wom_rank IS NOT NULL")
+        cursor.execute("SELECT lower(rsn), wom_id FROM members WHERE wom_rank IS NOT NULL")
         player_name_to_wom_id = {row[0]: row[1] for row in cursor.fetchall()}
         # logging.error(f"Success refreshing cache")
         cursor.close()
