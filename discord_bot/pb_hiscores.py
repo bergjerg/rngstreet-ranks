@@ -181,7 +181,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             unload_time = users[0][2]
 
                             # Check if unload_time is less than 36 hours ago
-                            is_new = datetime.now() - unload_time < timedelta(hours=36)
+                            is_new = datetime.now() - unload_time < timedelta(days=7)
 
                             entry = f"`{position}. {rsn_list_str}`"
                             if discord_list:
@@ -234,7 +234,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             unload_time = users[0][2]
 
                             # Check if unload_time is less than 36 hours ago
-                            is_new = datetime.now() - unload_time < timedelta(hours=36)
+                            is_new = datetime.now() - unload_time < timedelta(days=7)
 
                             entry = f"`{position}. {rsn_list_str}`"
                             if discord_list:
