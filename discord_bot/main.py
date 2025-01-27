@@ -3,7 +3,7 @@
 import asyncio
 import discord
 from discord.ext import commands, tasks
-from config import BOT_TOKEN, MEMBER_CHANNEL_ID, MOD_TOOLS_CHANNEL_ID, MEMBER_INTERACTION_MESSAGE_ID
+from config import BOT_TOKEN, MEMBER_CHANNEL_ID, ROLES_CHANNEL_ID, MOD_TOOLS_CHANNEL_ID, MEMBER_INTERACTION_MESSAGE_ID, GET_ROLES_MESSAGE_ID
 from member_interactions import bot, CheckRankButton, AddRSNModal, SetMainRSNButton, HowRanksWorkButton
 from rank_management import change_rank_on_discord  
 from mod_interactions import display_mod_tools, refresh_mod_tools, on_button_click, send_rankups_log
@@ -18,6 +18,7 @@ async def on_ready():
 
     # Initialize the main member channel
     member_channel = bot.get_channel(MEMBER_CHANNEL_ID)
+    roles_channel = bot.get_channel(ROLES_CHANNEL_ID)
     
     # Create the buttons
     add_rsn_button = discord.ui.Button(label="Add RSN", style=discord.ButtonStyle.secondary)
@@ -78,6 +79,24 @@ async def on_ready():
     view.add_item(how_ranks_work_button)
     view.add_item(add_rsn_button)
     view.add_item(choose_main_button)
+
+    #Create the view for the #get-your-roles channel
+    add_rsn_button = discord.ui.Button(label="Add RSN", style=discord.ButtonStyle.primary)
+    add_rsn_button.callback = add_rsn_callback
+    view_roles = discord.ui.View(timeout=None)
+    view_roles.add_item(add_rsn_button)
+    #Post in get-your-roles
+    embed = discord.Embed(
+        title="Clan Rank",
+        description="Let us know your RSN to get your in-game rank as your Discord role.",
+        color=discord.Color.default()  # You can customize the color
+    )
+    try:
+        existing_message = await roles_channel.fetch_message(GET_ROLES_MESSAGE_ID)
+        await existing_message.edit(embed=embed, view=view_roles)
+    except Exception as e:
+        await roles_channel.send(embed=embed, view=view_roles)
+    
 
     # Initialize the mod tools in the mod tools channel
     mod_tools_channel = bot.get_channel(MOD_TOOLS_CHANNEL_ID)
