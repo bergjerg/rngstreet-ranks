@@ -764,6 +764,42 @@ def dink():
                 else:
                     logging.info(f" No match against message: {message}")
                 return '', 200
+            elif (
+                data['type'] == 'CHAT' and
+                data['clanName'] == 'RNG Street' and
+                data['extra']['type'] == 'CLAN_MESSAGE'
+            ):
+                message = data['extra'].get('message', '')
+
+                # Regex to match messages like "X received a Y drop"
+                drop_pattern = re.compile(r".*received a.*drop.*", re.IGNORECASE)
+
+                if drop_pattern.search(message):
+                    # Check for duplicate message
+                    if is_duplicate(message):
+                        logging.info("Duplicate drop message detected, skipping insert.")
+                        return '', 200
+
+                    # Insert into the stg_clan_drops table
+                    connect_db()
+                    try:
+                        cursor.execute(
+                            """
+                            INSERT INTO stg_clan_drops (unload_time, message)
+                            VALUES (NOW(), %s)
+                            """,
+                            (message,)
+                        )
+                        db.commit()
+                    except Exception as e:
+                        logging.error(f"Database error while inserting drop message: {e}")
+                        db.rollback()
+                    finally:
+                        cursor.close()
+                        db.close()
+
+                return '', 200
+
         return 'error', 200
 
     except Exception as e:
