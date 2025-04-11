@@ -11,6 +11,7 @@ from splits_monitor import monitor_splits
 from db import get_db_connection
 from loot_hiscores import post_loot_hiscores
 from pb_hiscores import post_clan_pb_hiscores
+from twitch_monitor import start_twitch_monitoring
 
 @bot.event
 async def on_ready():
@@ -108,12 +109,14 @@ async def on_ready():
 
     # Start the periodic tasks
     monitor_discord_ranks.start()
+    start_twitch_monitoring(bot)
     refresh_mod_tools.start()
     send_rankups_log.start()
     post_clan_pb_hiscores.start()
     await asyncio.sleep(10) 
     post_loot_hiscores.start()
     await asyncio.sleep(2) 
+    
     
     try:
         existing_message = await member_channel.fetch_message(MEMBER_INTERACTION_MESSAGE_ID)
