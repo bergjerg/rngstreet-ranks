@@ -10,7 +10,7 @@
     "chatMessageTypes": ["PRIVATE", "CLAN"],
     "lootSendImage": false,
     "chatSendImage": false,
-    "chatPatterns": "*has achieved a new*personal best*",
+    "chatPatterns": "*has achieved a new*personal best*\n*received a*drop*",
     "notifyChat": true,
     "lootIncludePlayer": true,
     "minLootValue": 100,    

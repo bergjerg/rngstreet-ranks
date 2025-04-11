@@ -265,7 +265,7 @@ fetch(`/members?nocache=${new Date().getTime()}`)
         
                     // Toggle filters for rank ups and mismatches
                     const matchesRankUps = !isRankUpsOn || (nextRankCell);
-                    const matchesRankMismatches = !isRankMismatchesOn || (inGameRankCell);
+                    const matchesRankMismatches = !isRankMismatchesOn || ((inGameRankCell) && inGameRankCell != "Not In Clan");
         
                     const shouldShowRow = matchesSearch && matchesRank && matchesNextRank && matchesInGameRank && matchesDiscordRank && matchesAccountType && matchesRankUps && matchesRankMismatches;
         

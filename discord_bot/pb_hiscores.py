@@ -164,13 +164,14 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             max_rsn_list_length = 0
                         else:
                             max_rsn_list_length = max(len(", ".join([user[0] for user in users])) for users in grouped_by_time.values())
-                            max_rsn_list_length = max(20, max_rsn_list_length)
+                            max_rsn_list_length = min(20, max_rsn_list_length)
+                            max_rsn_list_length = 20
 
 
                         # Ensure exactly 3 positions are displayed
                         position = 1
                         for time_seconds, users in sorted(grouped_by_time.items()):
-                            if position > 3:
+                            if position > 5:
                                 break
                             rsn_list = [user[0] for user in users]
                             # Pad RSN list to the maximum length
@@ -194,7 +195,7 @@ async def post_or_update_clan_pb_hiscores(channel_id):
 
 
                         # Pad missing positions
-                        while position <= 3:
+                        while position <= 5:
                             entries.append(f"`{position}.`")
                             position += 1
 
@@ -217,7 +218,8 @@ async def post_or_update_clan_pb_hiscores(channel_id):
                             max_rsn_list_length = 0
                         else:
                             max_rsn_list_length = max(len(", ".join([user[0] for user in users])) for users in grouped_by_time.values())
-                            max_rsn_list_length = max(20, max_rsn_list_length)
+                            max_rsn_list_length = min(20, max_rsn_list_length)
+                            max_rsn_list_length = 20
 
 
                         # Ensure exactly 3 positions are displayed
