@@ -112,9 +112,10 @@ async def display_mod_tools(channel: discord.TextChannel):
             message = await channel.fetch_message(original_message_id)
             await message.edit(view=view)
         except:
-            await channel.purge(limit=10)
-            message = await channel.send(view=view)
-            original_message_id = message.id
+            None
+            #await channel.purge(limit=10)
+            #message = await channel.send(view=view)
+            #original_message_id = message.id
     
     except Exception as e:
         print(f"Error while displaying mod tools: {e}")

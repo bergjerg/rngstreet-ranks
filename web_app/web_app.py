@@ -195,7 +195,7 @@ def points_tracking():
 @app.route('/members', methods=['GET'])
 def get_members():
     connect_db()
-    cursor.execute("SELECT WOM_ID, NAME, MAIN_WOM_ID, JOIN_DATE, `RANK`, POINTS, WOM_RANK, DISCORD_ID, ACCOUNT_TYPE, RSN, NEXT_RANK, CURRENT_RANK_POINTS, LAST_ACTIVE FROM rngstreet.vw_web_homepage;")
+    cursor.execute("SELECT WOM_ID, NAME, MAIN_WOM_ID, JOIN_DATE, `RANK`, POINTS, WOM_RANK, DISCORD_ID, ACCOUNT_TYPE, RSN, NEXT_RANK, CURRENT_RANK_POINTS, LAST_ACTIVE FROM rngstreet.vw_web_homepage where wom_rank <> 'Not In Clan';")
     members = cursor.fetchall()
     db.close()
     
@@ -763,6 +763,22 @@ def dink():
                         db.close()
                 else:
                     logging.info(f" No match against message: {message}")
+                    connect_db()
+                    try:
+                        cursor.execute(
+                            """
+                            INSERT INTO stg_clan_drops (unload_time, message)
+                            VALUES (NOW(), %s)
+                            """,
+                            (message,)
+                        )
+                        db.commit()
+                    except Exception as e:
+                        logging.error(f"Database error while inserting drop message: {e}")
+                        db.rollback()
+                    finally:
+                        cursor.close()
+                        db.close()
                 return '', 200
             elif (
                 data['type'] == 'CHAT' and
