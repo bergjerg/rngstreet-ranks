@@ -88,7 +88,8 @@ def load_user(user_id):
 # Protect all routes except login and static files
 @app.before_request
 def require_login():
-    if not current_user.is_authenticated and request.endpoint not in ['login', 'static', 'dink']:
+    allowed_endpoints = ['login', 'static', 'dink', 'serve_yama_sim', 'serve_sim_root']
+    if not current_user.is_authenticated and request.endpoint not in allowed_endpoints:
         return redirect(url_for('login'))
 
 # Login route
@@ -846,13 +847,33 @@ def initialize_cache():
         refresh_cache()
         cache_initialized = True
 
+from flask import Flask, send_from_directory, abort
+import os
+
+app = Flask(__name__)
+YAMA_SIM_PATH = os.path.join(app.static_folder, 'yama_sim')
+
+@app.route('/sim')
+def serve_sim_index():
+    try:
+        return send_from_directory(YAMA_SIM_PATH, 'index.html')
+    except:
+        abort(404)
+
+@app.route('/sim/<path:filename>')
+def serve_sim_files(filename):
+    try:
+        return send_from_directory(YAMA_SIM_PATH, filename)
+    except:
+        abort(404)
+
 
 if __name__ == "__main__":
     # Determine if running in production or development
     if os.getenv('ENV') == 'prod':
         app.run(host='0.0.0.0', port=8080, debug=False)
     else:
-        app.run(host='127.0.0.1', port=8080, debug=True)
+        app.run(host='127.0.0.1', port=8081, debug=True)
 
 # Set up logging
 if not app.debug:
