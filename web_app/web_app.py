@@ -88,7 +88,7 @@ def load_user(user_id):
 # Protect all routes except login and static files
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'static', 'dink', 'serve_yama_sim', 'serve_sim_root']
+    allowed_endpoints = ['login', 'static', 'dink', 'serve_sim', 'serve_sim_static']
     if not current_user.is_authenticated and request.endpoint not in allowed_endpoints:
         return redirect(url_for('login'))
 
@@ -847,25 +847,14 @@ def initialize_cache():
         refresh_cache()
         cache_initialized = True
 
-from flask import Flask, send_from_directory, abort
-import os
+@app.route('/yama_sim')
+def serve_sim():
+    return send_from_directory('static/yama_sim', 'index.html')
 
-app = Flask(__name__)
-YAMA_SIM_PATH = os.path.join(app.static_folder, 'yama_sim')
+@app.route('/yama_sim/<path:path>')
+def serve_sim_static(path):
+    return send_from_directory('static/yama_sim', path)
 
-@app.route('/sim')
-def serve_sim_index():
-    try:
-        return send_from_directory(YAMA_SIM_PATH, 'index.html')
-    except:
-        abort(404)
-
-@app.route('/sim/<path:filename>')
-def serve_sim_files(filename):
-    try:
-        return send_from_directory(YAMA_SIM_PATH, filename)
-    except:
-        abort(404)
 
 
 if __name__ == "__main__":

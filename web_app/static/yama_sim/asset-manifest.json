@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/sim/static/css/main.7b38ae3a.css",
-    "main.js": "/sim/static/js/main.5ca25122.js",
-    "static/js/453.9897b44d.chunk.js": "/sim/static/js/453.9897b44d.chunk.js",
-    "index.html": "/sim/index.html",
-    "main.7b38ae3a.css.map": "/sim/static/css/main.7b38ae3a.css.map",
-    "main.5ca25122.js.map": "/sim/static/js/main.5ca25122.js.map",
-    "453.9897b44d.chunk.js.map": "/sim/static/js/453.9897b44d.chunk.js.map"
+    "main.css": "/yama_sim/static/css/main.7b38ae3a.css",
+    "main.js": "/yama_sim/static/js/main.d5535a43.js",
+    "static/js/453.9897b44d.chunk.js": "/yama_sim/static/js/453.9897b44d.chunk.js",
+    "index.html": "/yama_sim/index.html",
+    "main.7b38ae3a.css.map": "/yama_sim/static/css/main.7b38ae3a.css.map",
+    "main.d5535a43.js.map": "/yama_sim/static/js/main.d5535a43.js.map",
+    "453.9897b44d.chunk.js.map": "/yama_sim/static/js/453.9897b44d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.7b38ae3a.css",
-    "static/js/main.5ca25122.js"
+    "static/js/main.d5535a43.js"
   ]
 }
