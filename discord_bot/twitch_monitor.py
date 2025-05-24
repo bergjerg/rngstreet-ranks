@@ -6,7 +6,7 @@ from config import TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET
 
 # List of (twitch_name, discord_id) pairs.
 TWITCH_DISCORD_PAIRS = [
-    ("etcetcetc", "228168159461376010")
+    ("kerperrs", "228168159461376010")
     #("twitch_username2", "234567890123456789"),
 ]
 
