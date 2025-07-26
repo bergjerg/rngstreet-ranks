@@ -5,6 +5,7 @@ import re
 import json
 import logging
 import threading
+import requests
 from datetime import datetime, timedelta
 from collections import deque
 from logging.handlers import RotatingFileHandler
@@ -88,7 +89,7 @@ def load_user(user_id):
 # Protect all routes except login and static files
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'static', 'dink', 'serve_sim', 'serve_sim_static']
+    allowed_endpoints = ['login', 'static', 'dink', 'kerper', 'serve_sim', 'serve_sim_static']
     if not current_user.is_authenticated and request.endpoint not in allowed_endpoints:
         return redirect(url_for('login'))
 
@@ -624,6 +625,41 @@ def store_message_signature(message_signature):
     with cache_lock:
         recent_messages.append((datetime.now(), message_signature))
 
+   
+
+DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1371740527149715559/OVuS_0-ZsW1iNLrEKWHcO46e4g3nmgiIttNfMw1KW32AARh-GZjIWau2MqOxnyG1BF_s'
+@app.route('/kerper', methods=['GET', 'POST'])
+def kerper():
+    try:
+        if request.method == 'GET':
+            json_file_path = os.path.join(os.path.dirname(__file__), 'kerper_dink.json')
+            if os.path.exists(json_file_path):
+                return send_file(json_file_path, mimetype='application/json')
+            else:
+                return jsonify({"error": "dink.json file not found"}), 404
+
+        elif request.method == 'POST':
+            headers = dict(request.headers)
+            data = request.get_data()  # raw bytes
+
+            # Don't forward Host or Content-Length
+            headers.pop('Host', None)
+            headers.pop('Content-Length', None)
+
+            response = requests.post(
+                DISCORD_WEBHOOK_URL,
+                data=data,
+                headers=headers  # preserves Content-Type, etc.
+            )
+
+            return (response.text, response.status_code)
+
+    except Exception as e:
+        logging.error(f"Error forwarding to Discord: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+        
+        
 @app.route('/dink', methods=['GET', 'POST'])
 def dink():
     global player_name_to_wom_id
@@ -823,6 +859,7 @@ def dink():
         player_name = data.get('playerName', 'Unknown')  # Safely get 'playerName' or default to 'Unknown'
         logging.error(f"Error: {e}. PlayerName: {player_name}")
         return 'error', 200
+
    
 def refresh_cache():
     global player_name_to_wom_id
@@ -838,6 +875,8 @@ def refresh_cache():
     
     # Schedule the next cache refresh
     threading.Timer(300, refresh_cache).start()  # Refresh every 5 minutes
+    
+    
 
 @app.before_request
 def initialize_cache():
