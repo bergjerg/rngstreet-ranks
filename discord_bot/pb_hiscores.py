@@ -381,20 +381,12 @@ class PBSelect(Select):
                 return
 
             user_discord_id = str(interaction.user.id)
-            user_pb_time = None
-            user_pb_time = None
-            user_rsn = None
-            user_unload_time = None
-            user_position = None
-            
+            user_pbs = []
+
             for row in rows:
                 _, _, _, time_seconds, rsn, discord_id, unload_time, position = row
                 if discord_id == user_discord_id:
-                    user_pb_time = time_seconds
-                    user_rsn = rsn
-                    user_unload_time = unload_time
-                    user_position = position
-                    break
+                    user_pbs.append((position, rsn, time_seconds, unload_time))
 
             team_sizes = defaultdict(list)
             for row in rows:
@@ -437,25 +429,43 @@ class PBSelect(Select):
             sizes_to_display = allowed_team_sizes or list(team_sizes.keys())
             color_header = f"\n```ansi\n{color_code}{boss_name}```"
 
-            embed = discord.Embed(
-                title=f"{boss_name} Hiscores",
-                description=color_header,
-                color=discord.Color.blue(),
-                timestamp=datetime.now()
-            )
-
-            #if user_pb_time is not None:
-               # embed.add_field(name="Your Time", value=f"**{format_time(user_pb_time)}**", inline=False)
-                
-            if user_pb_time is not None:
-                line_prefix = f"{user_position}. "
-                padded_rsn = f"{line_prefix}{user_rsn}".ljust(45)
-                embed.add_field(
-                    name="Your Time",
-                    value=f"`{padded_rsn}` - **{format_time(user_pb_time)}** <t:{int(user_unload_time.timestamp())}:R>",
-                    inline=False
-                )
+            MAX_EMBED_CHARS = 5800
+            MAX_FIELDS = 25
             MAX_ENTRIES_PER_FIELD = 10
+            embeds = []
+
+            def new_embed(title_suffix=""):
+                return discord.Embed(
+                    title=f"{boss_name} Hiscores{title_suffix}",
+                    description=color_header if not embeds else None,
+                    color=discord.Color.blue(),
+                    timestamp=datetime.now()
+                )
+
+            embed = new_embed()
+            embeds = [embed]
+            char_count = len(embed.title or '') + len(embed.description or '')
+            field_count = 0
+
+            if user_pbs:
+                lines = []
+                grouped_by_size = defaultdict(list)
+                for row in rows:
+                    _, _, team_size, time_seconds, rsn, discord_id, unload_time, position = row
+                    if discord_id == user_discord_id:
+                        grouped_by_size[team_size].append((position, rsn, time_seconds, unload_time))
+
+                for team_size in sorted(grouped_by_size.keys()):
+                    team_label = f"**`{format_team_size(team_size)}`**"
+                    lines.append(team_label)
+                    for position, rsn, time_seconds, unload_time in grouped_by_size[team_size]:
+                        line_prefix = f"{position}. "
+                        padded_rsn = f"{line_prefix}{rsn}".ljust(45)
+                        line = f"`{padded_rsn}` - **{format_time(time_seconds)}** <t:{int(unload_time.timestamp())}:R>"
+                        lines.append(line)
+
+                embed.add_field(name="Your Time", value="\n".join(lines).strip(), inline=False)
+
             for team_size in sorted(sizes_to_display):
                 records = team_sizes.get(team_size, [])
                 if not records:
@@ -464,9 +474,22 @@ class PBSelect(Select):
                 for i in range(0, len(all_entries), MAX_ENTRIES_PER_FIELD):
                     chunk = all_entries[i:i + MAX_ENTRIES_PER_FIELD]
                     field_label = f"**`{format_team_size(team_size)}`**" if i == 0 else ""
-                    embed.add_field(name=field_label, value="\n".join(chunk), inline=False)
+                    field_value = "\n".join(chunk)
+                    estimated_size = len(field_label) + len(field_value)
 
-            await interaction.response.edit_message(embed=embed, view=self.view)
+                    if field_count >= MAX_FIELDS or char_count + estimated_size > MAX_EMBED_CHARS:
+                        embed = new_embed(" (cont.)")
+                        embeds.append(embed)
+                        char_count = len(embed.title or '')
+                        field_count = 0
+
+                    embed.add_field(name=field_label or '\u200b', value=field_value, inline=False)
+                    char_count += estimated_size
+                    field_count += 1
+
+            await interaction.response.edit_message(embed=embeds[0], view=self.view)
+            for followup_embed in embeds[1:]:
+                await interaction.followup.send(embed=followup_embed, ephemeral=True)
 
         finally:
             cursor.close()
