@@ -1,5 +1,6 @@
 import asyncio
-import discord    
+import discord 
+import logging  
 from discord.ui import Button, View, Select
 from collections import defaultdict
 from discord.ext import tasks
@@ -12,6 +13,7 @@ import config
 # Use MEMBER_CHANNEL_ID from config
 MEMBER_CHANNEL_ID = config.MEMBER_CHANNEL_ID
 clan_pb_post_ids = config.CLAN_PB_POST_IDS  # Store post IDs in memory
+logger = logging.getLogger(__name__) 
 
 
 def format_time(seconds):
@@ -327,6 +329,7 @@ class ViewFullPBsButton(Button):
         self.bosses = bosses
 
     async def callback(self, interaction: discord.Interaction):
+        logger.info(f"{interaction.user} ({interaction.user.id}) viewed PB hiscores")
         await interaction.response.send_message(
             "Boss:",
             view=PBSelectView(self.bosses),
@@ -347,6 +350,8 @@ class PBSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         boss_name = self.values[0]
+        logger.info(f"{interaction.user} ({interaction.user.id}) viewed PB hiscores for boss {boss_name}")
+        print(f"{interaction.user} ({interaction.user.id}) viewed PB hiscores for boss {boss_name}")
         db = get_db_connection()
         cursor = db.cursor()
         try:
@@ -377,10 +382,18 @@ class PBSelect(Select):
 
             user_discord_id = str(interaction.user.id)
             user_pb_time = None
+            user_pb_time = None
+            user_rsn = None
+            user_unload_time = None
+            user_position = None
+            
             for row in rows:
-                _, _, _, time_seconds, _, discord_id, _, _ = row
+                _, _, _, time_seconds, rsn, discord_id, unload_time, position = row
                 if discord_id == user_discord_id:
                     user_pb_time = time_seconds
+                    user_rsn = rsn
+                    user_unload_time = unload_time
+                    user_position = position
                     break
 
             team_sizes = defaultdict(list)
@@ -431,9 +444,17 @@ class PBSelect(Select):
                 timestamp=datetime.now()
             )
 
+            #if user_pb_time is not None:
+               # embed.add_field(name="Your Time", value=f"**{format_time(user_pb_time)}**", inline=False)
+                
             if user_pb_time is not None:
-                embed.add_field(name="Your Time", value=f"**{format_time(user_pb_time)}**", inline=False)
-
+                line_prefix = f"{user_position}. "
+                padded_rsn = f"{line_prefix}{user_rsn}".ljust(45)
+                embed.add_field(
+                    name="Your Time",
+                    value=f"`{padded_rsn}` - **{format_time(user_pb_time)}** <t:{int(user_unload_time.timestamp())}:R>",
+                    inline=False
+                )
             MAX_ENTRIES_PER_FIELD = 10
             for team_size in sorted(sizes_to_display):
                 records = team_sizes.get(team_size, [])
