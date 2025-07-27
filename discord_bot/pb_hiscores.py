@@ -1,5 +1,7 @@
 import asyncio
-import discord
+import discord    
+from discord.ui import Button, View, Select
+from collections import defaultdict
 from discord.ext import tasks
 from db import get_db_connection
 from member_interactions import bot
@@ -280,20 +282,32 @@ async def post_or_update_clan_pb_hiscores(channel_id):
         # Post or update embeds
         channel = bot.get_channel(channel_id)
 
-        if not clan_pb_post_ids:  # If no existing posts, create a new one
-            for embed in embeds:
-                new_message = await channel.send(embed=embed)
+        def create_view_with_bosses(boss_list):
+            view = discord.ui.View()
+            view.add_item(ViewFullPBsButton(bosses=boss_list.copy()))
+            return view
+
+        if not clan_pb_post_ids:
+            for embed_idx, embed in enumerate(embeds):
+                category = list(categories.keys())[embed_idx]
+                boss_list = list(categories[category].keys())
+                view = create_view_with_bosses(boss_list)
+
+                new_message = await channel.send(embed=embed, view=view)
                 clan_pb_post_ids.append(new_message.id)
         else:
             for i, embed in enumerate(embeds):
-                if i < len(clan_pb_post_ids):  # Update existing posts
+                if i < len(clan_pb_post_ids):
                     try:
                         message = await channel.fetch_message(clan_pb_post_ids[i])
-                        await message.edit(embed=embed, view=None)
-                        await asyncio.sleep(2) 
-                    except discord.NotFound:
-                        pass  # Do nothing if the message is not found
+                        category = list(categories.keys())[i]
+                        boss_list = list(categories[category].keys())
+                        view = create_view_with_bosses(boss_list)
 
+                        await message.edit(embed=embed, view=view)
+                        await asyncio.sleep(2)
+                    except discord.NotFound:
+                        pass
     except Exception as e:
         print(f"Error while fetching clan PB hiscores: {e}")
     finally:
@@ -306,3 +320,133 @@ async def post_or_update_clan_pb_hiscores(channel_id):
 @tasks.loop(minutes=1)
 async def post_clan_pb_hiscores():
     await post_or_update_clan_pb_hiscores(MEMBER_CHANNEL_ID)
+
+class ViewFullPBsButton(Button):
+    def __init__(self, bosses):
+        super().__init__(label="Check All PBs", style=discord.ButtonStyle.primary)
+        self.bosses = bosses
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            "Boss:",
+            view=PBSelectView(self.bosses),
+            ephemeral=True
+        )
+
+
+class PBSelectView(View):
+    def __init__(self, bosses):
+        super().__init__(timeout=None)
+        options = [discord.SelectOption(label=boss, value=boss) for boss in sorted(bosses)]
+        self.add_item(PBSelect(options))
+
+
+class PBSelect(Select):
+    def __init__(self, options):
+        super().__init__(placeholder="Choose a boss", options=options, min_values=1, max_values=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        boss_name = self.values[0]
+        db = get_db_connection()
+        cursor = db.cursor()
+        try:
+            cursor.execute("""
+                SELECT category, color, allowed_team_sizes
+                FROM boss_cfg
+                WHERE boss_name = %s
+            """, (boss_name,))
+            boss_row = cursor.fetchone()
+            if not boss_row:
+                await interaction.response.send_message("Boss not found.", ephemeral=True)
+                return
+
+            category, color, allowed_team_sizes = boss_row
+            allowed_team_sizes = [int(x) for x in allowed_team_sizes.split(",")] if allowed_team_sizes else None
+            color_code = get_color_code(color)
+
+            cursor.execute("""
+                SELECT category, boss_name, team_size, time_seconds, rsn, discord_id, unload_time, position
+                FROM vw_clan_pb_hiscores
+                WHERE boss_name = %s
+                ORDER BY team_size, position ASC
+            """, (boss_name,))
+            rows = cursor.fetchall()
+            if not rows:
+                await interaction.response.send_message("No PBs found for that boss.", ephemeral=True)
+                return
+
+            user_discord_id = str(interaction.user.id)
+            user_pb_time = None
+            for row in rows:
+                _, _, _, time_seconds, _, discord_id, _, _ = row
+                if discord_id == user_discord_id:
+                    user_pb_time = time_seconds
+                    break
+
+            team_sizes = defaultdict(list)
+            for row in rows:
+                _, _, team_size, *_ = row
+                team_sizes[team_size].append(row)
+
+            def render_team_entries(team_size, records):
+                grouped_by_time = defaultdict(list)
+                for record in records:
+                    _, _, _, time_seconds, rsn, discord_id, unload_time, position = record
+                    grouped_by_time[time_seconds].append((rsn, discord_id, unload_time, position))
+
+                entries = []
+                position = 1
+                max_rsn_line_length = 45
+                for time_seconds, users in sorted(grouped_by_time.items()):
+                    rsns = [u[0] for u in users]
+                    unload_time = users[0][2]
+                    is_new = datetime.now() - unload_time < timedelta(days=6)
+
+                    line_prefix = f"{position}. "
+                    spacer = " " * len(line_prefix)
+                    current_line = line_prefix
+                    lines = []
+                    for i, rsn in enumerate(rsns):
+                        next_part = rsn + (", " if i < len(rsns) - 1 else "")
+                        if len(current_line.strip()) + len(next_part) > max_rsn_line_length:
+                            lines.append(f"`{current_line.ljust(max_rsn_line_length)}`")
+                            current_line = spacer + next_part
+                        else:
+                            current_line += next_part
+                    lines.append(f"`{current_line.ljust(max_rsn_line_length)}`")
+                    lines[-1] += f" - **{format_time(time_seconds)}** <t:{int(unload_time.timestamp())}:R>"
+                    if is_new:
+                        lines[-1] += " :new:"
+                    entries.append("\n".join(lines))
+                    position += 1
+                return entries
+
+            sizes_to_display = allowed_team_sizes or list(team_sizes.keys())
+            color_header = f"\n```ansi\n{color_code}{boss_name}```"
+
+            embed = discord.Embed(
+                title=f"{boss_name} Hiscores",
+                description=color_header,
+                color=discord.Color.blue(),
+                timestamp=datetime.now()
+            )
+
+            if user_pb_time is not None:
+                embed.add_field(name="Your Time", value=f"**{format_time(user_pb_time)}**", inline=False)
+
+            MAX_ENTRIES_PER_FIELD = 10
+            for team_size in sorted(sizes_to_display):
+                records = team_sizes.get(team_size, [])
+                if not records:
+                    continue
+                all_entries = render_team_entries(team_size, records)
+                for i in range(0, len(all_entries), MAX_ENTRIES_PER_FIELD):
+                    chunk = all_entries[i:i + MAX_ENTRIES_PER_FIELD]
+                    field_label = f"**`{format_team_size(team_size)}`**" if i == 0 else ""
+                    embed.add_field(name=field_label, value="\n".join(chunk), inline=False)
+
+            await interaction.response.edit_message(embed=embed, view=self.view)
+
+        finally:
+            cursor.close()
+            db.close()
