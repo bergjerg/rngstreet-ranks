@@ -627,7 +627,12 @@ def store_message_signature(message_signature):
 
    
 
-DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1371740527149715559/OVuS_0-ZsW1iNLrEKWHcO46e4g3nmgiIttNfMw1KW32AARh-GZjIWau2MqOxnyG1BF_s'
+DISCORD_WEBHOOK_URL = ''
+#'https://disc
+#ord.com/api/we
+#bhooks/13717405271497155
+#59/OVuS_0-ZsW1iNLrEKWHcO46e4g3nmgiIttNfMw1KW32
+#AARh-GZjIWau2MqOxnyG1BF_s'
 @app.route('/kerper', methods=['GET', 'POST'])
 def kerper():
     try:

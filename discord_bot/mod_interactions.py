@@ -95,7 +95,7 @@ async def display_mod_tools(channel: discord.TextChannel):
     
     try:
         # Query for rank ups count
-        cursor.execute("SELECT COUNT(*) FROM vw_member_rankups WHERE NEXT_RANK <> '' AND rsn IS NOT NULL")
+        cursor.execute("SELECT COUNT(*) FROM vw_member_rankups WHERE NEXT_RANK <> '' AND rsn IS NOT NULL AND WOM_RANK IS NOT NULL")
         rank_ups_count = cursor.fetchone()[0]
 
         # Query for mismatches count
@@ -182,6 +182,7 @@ async def display_rank_ups(interaction: discord.Interaction):
             FROM vw_member_rankups
             WHERE NEXT_RANK <> ''
             AND rsn IS NOT NULL
+            AND WOM_RANK IS NOT NULL
             ORDER BY POINTS DESC
         """)
         rank_ups = cursor.fetchall()
