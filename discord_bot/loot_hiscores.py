@@ -4,7 +4,7 @@ import random
 import discord
 from discord.ext import tasks
 from discord.ui import Button, View
-from config import MEMBER_CHANNEL_ID, LOOT_HISCORES_MESSAGE_ID
+from config import LOOT_CHANNEL_ID, LOOT_HISCORES_MESSAGE_ID
 from db import get_db_connection
 from member_interactions import bot
 from datetime import datetime
@@ -490,7 +490,7 @@ async def on_view_loot_button_click(interaction):
 # Task to periodically update the loot hiscores message
 @tasks.loop(minutes=1)  # Adjust the loop interval as needed
 async def post_loot_hiscores():
-    await post_or_update_loot_hiscores(MEMBER_CHANNEL_ID)
+    await post_or_update_loot_hiscores(LOOT_CHANNEL_ID)
 
 
 async def clear_messages_after_timeout(msg_list):        

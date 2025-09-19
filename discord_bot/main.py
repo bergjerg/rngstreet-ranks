@@ -76,16 +76,15 @@ async def on_ready():
 
     # Create a view with the buttons
     view = discord.ui.View(timeout=None)
-    view.add_item(check_rank_button)
-    view.add_item(how_ranks_work_button)
-    view.add_item(add_rsn_button)
-    view.add_item(choose_main_button)
 
     #Create the view for the #get-your-roles channel
     add_rsn_button = discord.ui.Button(label="Add RSN", style=discord.ButtonStyle.primary)
     add_rsn_button.callback = add_rsn_callback
     view_roles = discord.ui.View(timeout=None)
     view_roles.add_item(add_rsn_button)
+    view_roles.add_item(check_rank_button)
+    view_roles.add_item(how_ranks_work_button)
+    view_roles.add_item(choose_main_button)
     #Post in get-your-roles
     embed = discord.Embed(
         title="Clan Rank",
@@ -118,13 +117,13 @@ async def on_ready():
     await asyncio.sleep(2) 
     
     
-    try:
-        existing_message = await member_channel.fetch_message(MEMBER_INTERACTION_MESSAGE_ID)
-        await existing_message.edit(view=view)
-    except Exception as e:
-        # If the message doesn't exist, purge recent messages and send a new one
-        #await member_channel.purge(limit=10)
-        await member_channel.send(view=view)
+    # try:
+    #     existing_message = await member_channel.fetch_message(MEMBER_INTERACTION_MESSAGE_ID)
+    #     await existing_message.edit(view=view)
+    # except Exception as e:
+    #     # If the message doesn't exist, purge recent messages and send a new one
+    #     #await member_channel.purge(limit=10)
+    #     await member_channel.send(view=view)
 
     # Start monitoring the splits
     await monitor_splits(bot)  # Call the function to start monitoring splits
